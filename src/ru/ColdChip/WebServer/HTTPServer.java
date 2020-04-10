@@ -33,6 +33,7 @@ public class HTTPServer {
 				HTTPServerThread myServer = new HTTPServerThread(map);
 				Socket client = serverConnect.accept();
 				Thread thread = new Thread(myServer);
+				client.setSoTimeout(30000);
 				myServer.attachClient(client);
 				thread.start();
 			}

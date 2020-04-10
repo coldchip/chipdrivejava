@@ -35,7 +35,6 @@ public class HTTPServerThread implements Runnable {
 		InputStream input = null;
 		OutputStream output = null;
 		try {
-			connect.setSoTimeout(30000);
 			input = connect.getInputStream();
 			output = connect.getOutputStream();
 			while(true) {
@@ -112,8 +111,10 @@ public class HTTPServerThread implements Runnable {
 
 		} catch (SocketException e) {
 
+		} catch (IOException e) {
+
 		} catch (Exception e) {
-			System.out.println("Exception: " + e.toString());
+			
 		} finally {
 			try {
 				input.close();
