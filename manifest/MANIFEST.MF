@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Created-By: 11.0.3 (Oracle Corporation)
+Signed-By: ColdChip Inc. 
+Main-Class: ru.ColdChip.ChipDrive.Server
+

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ColdChip - Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />		
+<link rel="shortcut icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="/>
+<script src="../libs/coldchip.js"></script>
+<meta charset="utf-8">
+<script>
+
+var oauthToken = "";
+
+var loader;
+
+window.onload = function() {
+	loader = new Loader();
+	onProbe();
+}
+
+function onProbe(force) {
+	loader.show();
+	loader.hideBackground("#F2F2F2");
+	document.getElementById("login").style.display = "none";
+	document.getElementById("oauthConfirm").style.display = "none";
+	send("GET", "/api/v1/login/state", "client_id=" + getQuery("client_id") + "&scope=" + getQuery("scope"), function(data) {
+	        loader.hide();
+	        var result = JSON.parse(data);
+	        var mode = force ? force : result["state"];
+	        if(mode == "NOT_LOGGED_IN") {
+	            document.getElementById("login").style.display = "block";
+	            document.getElementById("otp").style.display = "none";
+	            document.getElementById("oauthConfirm").style.display = "none";
+	            document.getElementById("service").innerHTML = result["service"];
+	        }
+	        if(mode == "OTP_CONFIRM") {
+	        	document.getElementById("login").style.display = "none";
+	            document.getElementById("otp").style.display = "block";
+	            document.getElementById("oauthConfirm").style.display = "none";
+	            document.getElementById("service").innerHTML = result["service"];
+	        }
+	        if(mode == "LOGGED_IN_OAUTH_CONFIRM") {
+                oauthToken = result["token"];
+                document.getElementById("authService").innerHTML = "Authorize " + result["service"];
+				document.getElementById("login").style.display = "none";
+				document.getElementById("oauthConfirm").style.display = "block";
+				document.getElementById("scopeHeader").innerHTML = result["service"] + " Will access the following: ";
+	        	document.getElementById("scopeData").innerHTML = "";
+	        	for(var i = 0; i < result["scope"][0].length; i++) {
+	        		var elem = document.createElement("p");
+	        		elem.className = "text";
+	        		elem.style.textAlign = "left";
+	        		elem.style.fontSize = "0.8em";
+	        		elem.style.color = "red";
+	        		elem.innerHTML = "• Your " + (result["scope"][0][i]) + "<br>";
+	        		document.getElementById("scopeData").appendChild(elem);
+	        	}
+	        }
+	        if(mode == "INTERNAL_ERROR") {
+                alert(result["msg"]);
+	        }
+	        if(mode == "LOGGED_IN") {
+	        	if(window.location != window.parent.location) {
+					window.parent.closeWin();
+	        	} else {
+	        		window.location.href = getQuery("continue");
+	        	}
+	        }
+	});
+}
+
+function login() {
+    var user = document.getElementById("user").value;
+    var pass = document.getElementById("pass").value;
+    document.getElementById("login").style.display = "none";
+    loader.show();
+	loader.hideBackground("#F2F2F2");
+    send("POST", "/api/v1/login", "username=" + encodeURI(user) + "&password=" + encodeURI(pass) + "&client_id=" + getQuery("client_id"), function(data) {
+        loader.hide();
+        var result = JSON.parse(data);
+        document.getElementById("loginMessageBoxLogin").style.display = "block";
+        document.getElementById("resLogin").innerHTML = result["message"];
+        document.getElementById("login").style.display = "block";
+        onProbe();
+    });
+}
+
+function otp() {
+    var otp = document.getElementById("otpValue").value;
+    document.getElementById("otp").style.display = "none";
+    loader.show();
+	loader.hideBackground("#F2F2F2");
+    send("POST", "/api/v1/otpToken", "token=" + encodeURI(otp), function(data) {
+       	loader.hide();
+        var result = JSON.parse(data);
+        document.getElementById("loginMessageBoxOTP").style.display = "block";
+        document.getElementById("resOTP").innerHTML = result["msg"];
+        document.getElementById("otp").style.display = "block";
+        onProbe();
+    });
+}
+
+function oauthConfirm(accept) {
+	if(accept == true) {
+		var returnToken = oauthToken;
+	} else {
+		var returnToken = false;
+	}
+	if(window.opener) {
+		var result = {
+			"state":getQuery("state"),
+			"token":returnToken
+		};
+		window.opener.postMessage(JSON.stringify(result), "*");
+	} else {
+		window.location.href = getQuery("continue") + "?token=" + returnToken + "&state=" + getQuery("state");
+	}
+}
+
+function send(method, path, data, callback) {
+    var http = new XMLHttpRequest();
+    http.open(method, path, true);
+    http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    http.send(data);
+    http.onreadystatechange = function()
+    {
+        if(this.readyState == 4 && this.status == 200)
+        {
+            callback(http.responseText);
+        }
+    };
+}
+
+function getQuery(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, '\\$&');
+    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
+</script>
+<style>
+@keyframes ajaxload {
+	0% {
+    	stroke-dasharray: 1,150;
+    	stroke-dashoffset: 0;
+	}
+
+	50% {
+	    stroke-dasharray: 90,150;
+	    stroke-dashoffset: -35;
+	}
+	100% {
+	    stroke-dasharray: 90,150;
+	    stroke-dashoffset: -124;
+	}
+}
+
+@keyframes ajaxloadSpin {
+	100% {
+	    transform: rotate(360deg);
+	}
+} *{
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	-ms-appearance: none;
+	-o-appearance: none;
+	direction: ltr;
+	outline:0;
+}body{
+	background: linear-gradient( rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3) ), #FCFCFC no-repeat center center fixed; 
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+}.text {
+	color: #333;
+	margin-top: 0;
+	margin-bottom: 0;
+	text-align: center;
+	font-family: "Trebuchet MS";
+}.form{
+	display: block;
+	margin: 100px auto;
+	padding: 15px 15px;
+	max-width: 300px;
+	background: #fff;
+	border-radius: 3px;
+	border: 1px solid #d1d5da;
+}.input{
+	box-sizing:border-box;
+	text-align: left;
+	width:100%;
+	height: 38px;
+	font-size: 18px;
+	font-weight: normal;
+	color: #3f3f3f;
+	border: none;
+	border-bottom: 1px solid #4D4D4D;
+	padding-left: 5px;
+	margin: 2px 0px 15px 0px;
+	border-radius: 0px;
+}.inputbutton{
+	font-weight: bold;
+	width: 100%;
+	height: 38px;
+	margin: 5px 0px;
+	color: #fff;
+	border: none;
+	background-color: #1F1F1F;
+	font-size:15px;
+	border-radius: 3px;
+	box-sizing:border-box;
+}
+</style>
+</head>
+<body id="body">
+	<div class="form" id="form">
+		<div id="oauthConfirm" style="display: none;">
+			<b><p class="text" style="font-size: 1.4em; margin-bottom: 20px;" id="authService">Authorize LOL</p></b>
+			<p class="text" style="font-size: 0.9em; margin-bottom: 5px;" id="scopeHeader"></p>
+			<div id="scopeData">
+				
+			</div>
+			<button onClick="oauthConfirm(true)" class="inputbutton">Accept</button>
+			<button onClick="onProbe('NOT_LOGGED_IN')" class="inputbutton">Switch Accounts</button>
+			<button onClick="oauthConfirm(false)" style="background-color:red;" class="inputbutton">Cancel</button>
+		</div>
+		<form id="login" style="display: none;">
+			<p class="text" style="font-size: 1.5em; height: 50px;">Sign in to ColdChip</p>
+			<p class="text" style="font-size: 1.0em; border-bottom: 1px solid #d1d5da; height: 50px; margin-bottom: 10px;">To continue on <b id="service">ColdChip</b></p>
+			<div style="border: 1px solid #ebccd1; display: none; border-radius: 3px; background-color: #f2dede; padding: 10px" id="loginMessageBoxLogin">
+				<p id="resLogin" class="text" style="font-size: 1.0em; font-weight: bold; color: #a94442;"></p>
+			</div>
+			<br>
+			<label class="text" style="font-size: 15px; float: left; font-weight: bold;">Username</label>
+			<input type="text" id="user" class="input" value="" autocomplete="off" autocorrect="off" autocapitalize="off"><br>
+			<label class="text" style="font-size: 15px; float: left; font-weight: bold;">Password</label>
+			<input type="password" id="pass" class="input" autocomplete="off"><br>
+			<input type="button" value="Sign In" onClick="login()" class="inputbutton"><br>
+		</form>
+		<form id="otp" style="display: none;">
+			<p class="text" style="font-size: 1.5em; height: 50px;">Sign in to ColdChip</p>
+			<p class="text" style="font-size: 1.0em; border-bottom: 1px solid #d1d5da; height: 50px; margin-bottom: 10px;">2FA Token Verification</p>
+			<div style="border: 1px solid #ebccd1; display: none; border-radius: 3px; background-color: #f2dede; padding: 10px" id="loginMessageBoxOTP">
+				<p id="resOTP" class="text" style="font-size: 1.0em; font-weight: bold; color: #a94442;"></p>
+			</div>
+			<br>
+			<label class="text" style="font-size: 15px; float: left; font-weight: bold;">One Time Pass</label>
+			<input type="text" id="otpValue" class="input" value="" autocomplete="off" autocorrect="off" autocapitalize="off"><br>
+			<input type="button" value="Sign In" onClick="otp()" class="inputbutton"><br>
+		</form>
+	</div>
+	<p class="text" style="font-size: 0.8em; margin-top: 25px;">&copy; 2018 ColdChip Inc. </p>
+</body>
+</html>
