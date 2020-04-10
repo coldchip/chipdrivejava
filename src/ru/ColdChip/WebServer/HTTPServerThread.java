@@ -72,47 +72,46 @@ public class HTTPServerThread implements Runnable {
 				request.res = response;
 				response.req = request;
 
-				try {
-					boolean isHandled = false;
-					for (String key : this.map.keySet()) {
-						LinkedHashMap<String, String> parameters = new LinkedHashMap<String, String>();
-						String[] pathSegments = cleanPath(key).split("/");
-						String[] calledPathSegments = cleanPath(headerLine.path).split("/");
-						int score = 0;
-						int requiredScore = Math.max(calledPathSegments.length, pathSegments.length);
-						for(int i = 0; i < Math.min(calledPathSegments.length, pathSegments.length); i++) {
-							if(pathSegments[i].equals(calledPathSegments[i])) {
-								score += 1;
-							} else if(isDynamic(pathSegments[i]) && !pathSegments[i].equals("{*}")) {
-								score += 1;
-								parameters.put(stripDynamic(pathSegments[i]), calledPathSegments[i]);
-							} else if(pathSegments[i].equals("{*}")) {
-								score = requiredScore;
-								break;
-							} else {
-								break;
-							}
-					
-							
-						}
-						if(score == requiredScore) {
-							isHandled = true;
-							HTTPRoute route = new HTTPRoute();
-							route = this.map.get(key);
-							request.args = parameters;
-							route.handle(request, response);
+		
+				boolean isHandled = false;
+				for (String key : this.map.keySet()) {
+					LinkedHashMap<String, String> parameters = new LinkedHashMap<String, String>();
+					String[] pathSegments = cleanPath(key).split("/");
+					String[] calledPathSegments = cleanPath(headerLine.path).split("/");
+					int score = 0;
+					int requiredScore = Math.max(calledPathSegments.length, pathSegments.length);
+					for(int i = 0; i < Math.min(calledPathSegments.length, pathSegments.length); i++) {
+						if(pathSegments[i].equals(calledPathSegments[i])) {
+							score += 1;
+						} else if(isDynamic(pathSegments[i]) && !pathSegments[i].equals("{*}")) {
+							score += 1;
+							parameters.put(stripDynamic(pathSegments[i]), calledPathSegments[i]);
+						} else if(pathSegments[i].equals("{*}")) {
+							score = requiredScore;
+							break;
+						} else {
 							break;
 						}
+				
+						
 					}
-					if(isHandled == false) {
-						throw new Exception("Not Found");
+					if(score == requiredScore) {
+						isHandled = true;
+						HTTPRoute route = new HTTPRoute();
+						route = this.map.get(key);
+						request.args = parameters;
+						route.handle(request, response);
+						break;
 					}
-				} catch(IOException e) {
-					response.writeText("I/O Error");
-				} catch(Exception e) {
+				}
+				if(isHandled == false) {
 					response.writeText("Unable to process request");
 				}
 			}
+		} catch (SocketTimeoutException e) {
+
+		} catch (SocketException e) {
+
 		} catch (Exception e) {
 			System.out.println("Exception: " + e.toString());
 		} finally {

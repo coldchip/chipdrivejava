@@ -4,10 +4,12 @@ JAR_ARCHIVER=jar
 
 JAVA=java
 
-
 module:
-	$(JAVA_COMPILER) -sourcepath src src/ru/ColdChip/ChipDrive/Server.java -d build/class
-	cd build/class && $(JAR_ARCHIVER) -cvfm ../../build/server.jar "../../manifest/MANIFEST.MF" * > /dev/null
-	echo "-----DONE-----"
+	@echo "-----Building 0%-----"
+	@$(JAVA_COMPILER) -sourcepath src src/ru/ColdChip/ChipDrive/Server.java -d build/class
+	@echo "-----Building 50%-----"
+	@cd build/class && $(JAR_ARCHIVER) -cvfm ../../build/server.jar "../../manifest/MANIFEST.MF" * > /dev/null
+	@echo "-----Building 100%-----"
+	@echo "-----DONE-----"
 run:
 	$(JAVA) -jar Build/server.jar
