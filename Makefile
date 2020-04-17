@@ -13,3 +13,5 @@ module:
 	@echo "-----DONE-----"
 run:
 	$(JAVA) -jar Build/server.jar
+runnohup:
+	sudo nohup java -jar build/server.jar >/dev/null 2>&1 &
