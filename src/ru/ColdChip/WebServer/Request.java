@@ -13,7 +13,7 @@ public class Request {
 	public Header header;
 	public InputStream stream;
 	public Response res;
-	LinkedHashMap<String, String> args;
+	private LinkedHashMap<String, String> args;
 	public Request(InputStream stream, Header header) {
 		this.header = header;
 		this.stream = stream;

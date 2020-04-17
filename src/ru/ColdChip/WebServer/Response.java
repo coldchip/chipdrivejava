@@ -45,8 +45,8 @@ public class Response {
 	}
 	public void writeText(String data) throws IOException {
 
-		writeHeader("HTTP/1.1 " + this.status + " OK");
-		writeHeader("Content-Type: " + this.contentType);
+		writeHeader("HTTP/1.1 " + getStatus() + " OK");
+		writeHeader("Content-Type: " + getContentType());
 		writeHeader("Content-Length: " + data.length());
 		writeHeader("Cache-Control: no-store");
 		writeHeader("Connection: Keep-Alive");
@@ -61,7 +61,7 @@ public class Response {
 	}
 	public void redirect(String loc) throws IOException {
 		writeHeader("HTTP/1.1 302 Found");
-		writeHeader("Content-Type: " + this.contentType);
+		writeHeader("Content-Type: " + getContentType());
 		writeHeader("Content-Length: 0");
 		writeHeader("Cache-Control: no-store");
 		writeHeader("Connection: Keep-Alive");
@@ -74,11 +74,17 @@ public class Response {
 		}
 		this.stream.flush();
 	}
-	public void status(int code) {
+	public void setStatus(int code) {
 		this.status = code;
+	}
+	public int getStatus() {
+		return this.status;
 	}
 	public void setContentType(String contentType) {
 		this.contentType = contentType;
+	}
+	public String getContentType() {
+		return this.contentType;
 	}
 	public String getMimeType(File file) throws IOException {
 		String mimeType = Files.probeContentType(file.toPath());
@@ -100,11 +106,11 @@ public class Response {
 			}
 		} catch(FileNotFoundException e) {
 			setContentType("application/json");
-			status(404);
+			setStatus(404);
 			writeText("Error 404");
 		} catch(Exception e) {
 			setContentType("application/json");
-			status(500);
+			setStatus(500);
 			writeText("500 Internal server error");
 		}
 	}
