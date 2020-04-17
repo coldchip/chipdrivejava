@@ -8,8 +8,6 @@ public class Server {
 
 	private static final int PORT = 9010;
 
-	private static final double VERSION = 1.1;
-	
 	public static void main(String[] args) {
 
 		try {
