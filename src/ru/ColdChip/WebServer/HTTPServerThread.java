@@ -93,7 +93,7 @@ public class HTTPServerThread implements Runnable {
 						isHandled = true;
 						HTTPRoute route = new HTTPRoute();
 						route = this.map.get(key);
-						request.args = parameters;
+						request.setArgs(parameters);
 						route.handle(request, response);
 						break;
 					}
@@ -150,19 +150,18 @@ public class HTTPServerThread implements Runnable {
 	}
 
 	private Header readHeader(InputStream in) throws IOException, RequestException {
-		Header head = new Header();
-
+		Header header = new Header();
 
 		String stub = readLine(in, 65535);
 
 		StringTokenizer parse = new StringTokenizer(stub);
-		head.setMethod(parse.nextToken().toUpperCase());
+		header.setMethod(parse.nextToken().toUpperCase());
 		StringTokenizer pathData = new StringTokenizer(parse.nextToken(), "?");
-		head.setPath(urlDecode(pathData.nextToken()));
+		header.setPath(urlDecode(pathData.nextToken()));
 		if(pathData.countTokens() == 1) {
-			head.query = splitQuery(pathData.nextToken());
+			header.query = splitQuery(pathData.nextToken());
 		}
-		head.version = parse.nextToken().toLowerCase();
+		header.setVersion(parse.nextToken().toLowerCase());
 
 		String headerLine;
 
@@ -173,14 +172,14 @@ public class HTTPServerThread implements Runnable {
 				String key = headerValues.nextToken(":").toLowerCase();
 				String value = ltrim(headerValues.nextToken(":"));
 				if(key.length() > 0 && value.length() > 0) {
-					head.headers.put(key, value);
+					header.addHeader(key, value);
 				}
 			} else {
 				break;
 			}
 		}
 		
-		return head;
+		return header;
 	}
 
 	public static String ltrim(String s) {

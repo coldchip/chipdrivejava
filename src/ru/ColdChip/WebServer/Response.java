@@ -8,7 +8,6 @@ package ru.ColdChip.WebServer;
 import java.io.*;
 import java.nio.file.*;
 import java.net.*;
-import ru.ColdChip.WebServer.ChipSession.SimpleSession;
 
 public class Response {
 	public OutputStream stream;
@@ -19,6 +18,9 @@ public class Response {
 	public Request req;
 	public Response(OutputStream stream) {
 		this.stream = stream;
+	}
+	public Request getRequest() {
+		return this.req;
 	}
 	public void writeHeader(String data) throws IOException {
 		data += "\r\n";
@@ -89,7 +91,7 @@ public class Response {
 
 	public void serve(String root) throws IOException {
 		try {
-			String path = pathNormalize(this.req.getHeader().getPath());
+			String path = pathNormalize(getRequest().getPath());
 			File target = new File(pathNormalize(root + "/" + path));
 			if(target.exists() == true && target.isDirectory() == false) {
 				writeFile(pathNormalize(root + "/" + path));
@@ -118,10 +120,10 @@ public class Response {
 		long objectSize = file.length();
 		long start = 0;
 		long end = objectSize - 1;
-		if(this.req.getHeader().containsHeader("range")) {
+		if(getRequest().containsHeader("range")) {
 			try {
-				start = Integer.parseInt(this.req.getHeader().getHeader("range").split("=")[1].split("-")[0].replaceAll("[^0-9]", ""));
-				end = Integer.parseInt(this.req.getHeader().getHeader("range").split("=")[1].split("-")[1].replaceAll("[^0-9]", ""));
+				start = getRequest().getRangeStart();
+				end = getRequest().getRangeEnd();
 			} catch(Exception e) {}
 			if((start >= 0 && start < objectSize) && (end > 0 && end <= objectSize)) {
 				writeHeader("HTTP/1.1 206 Partial Content");
@@ -144,18 +146,13 @@ public class Response {
 		writeHeader("Server: ColdChip Web Servlet/CWS 1.2");
 		writeHeader("");
 		int buffer = 1048576 * 10;
-		byte[] b;
+		byte[] b = new byte[buffer];
 		handler.seek(start);
 		for(long p = start; p < end; p += buffer) {
-			if((p + buffer) > end) {
-				buffer = (int)(end - p) + 1;
-				b = new byte[buffer];
-			} else {
-				b = new byte[buffer];
-			}
-			handler.read(b, 0, buffer);
+			int toRead = (int)Math.min(buffer, (end - p) + 1);
+			handler.read(b, 0, toRead);
 			writeByte(b);
-			
+			flush();
 		}
 		handler.close();
 	}

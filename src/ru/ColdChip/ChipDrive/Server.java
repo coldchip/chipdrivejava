@@ -1,7 +1,6 @@
 package ru.ColdChip.ChipDrive;
 
 import ru.ColdChip.WebServer.*;
-import ru.ColdChip.WebServer.Exceptions.TokenNotFoundException;
 import ru.ColdChip.ChipDrive.Routes.*;
 import org.JSON.*;
 
@@ -15,7 +14,7 @@ public class Server {
 
 		try {
 
-			System.out.println("ColdChip Drive V2.2.1 Java");
+			System.out.println("ColdChip Drive V2.3 Java");
 			System.out.println("--------------------------");
 			HTTPServer server = new HTTPServer(PORT);
 			ChipDriveRoute route = new ChipDriveRoute(server);

@@ -4,12 +4,10 @@ import ru.ColdChip.WebServer.*;
 
 import ru.ColdChip.ChipDrive.api.ChipFS;
 
-import ru.ColdChip.ChipDrive.ChipToken;
 import ru.ColdChip.ChipDrive.Exceptions.*;
 import ru.ColdChip.WebServer.Exceptions.TokenNotFoundException;
 import ru.ColdChip.ChipDrive.Constants.MimeTypes;
-import java.io.IOException;
-import java.io.File;
+import java.io.*;
 import java.util.*;
 import java.net.URLEncoder;
 import org.JSON.*;
@@ -166,7 +164,7 @@ public class ChipDrive {
 					node.load();
 					node.setOwner("apps903923890.coldchip.ru.coldchip.0");
 					String fileid = node.createFile(name);
-					long contentSize = Long.parseLong(request.header.headers.get("content-length").replaceAll("[^0-9]", ""));
+					long contentSize = Long.parseLong(request.getHeader("content-length").replaceAll("[^0-9]", ""));
 					if(contentSize > 0) {
 						long i = 0;
 						byte[] data = new byte[8192];
@@ -392,7 +390,7 @@ public class ChipDrive {
 					long objectSize = node.getSize();
 					long start = 0;
 					long end = objectSize - 1;
-					if(request.getHeader().containsHeader("range")) {
+					if(request.containsHeader("range")) {
 						try {
 							start = request.getRangeStart();
 							end = request.getRangeEnd();

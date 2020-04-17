@@ -31,8 +31,20 @@ public class Header {
 		return this.path;
 	}
 
+	public void setVersion(String version) {
+		this.version = version;
+	}
+
+	public String getVersion() {
+		return this.version;
+	}
+
 	public boolean containsHeader(String key) {
 		return headers.containsKey(key);
+	}
+
+	public void addHeader(String key, String value) {
+		headers.put(key, value);
 	}
 
 	public String getHeader(String key) {
