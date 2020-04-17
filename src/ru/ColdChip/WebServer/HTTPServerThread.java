@@ -11,10 +11,9 @@ import java.net.*;
 import java.util.*;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
-import javax.net.ssl.*;
-import java.util.HashMap;
 import java.nio.file.*;
-import java.util.regex.*;  
+import java.util.regex.*;
+import ru.ColdChip.WebServer.Exceptions.*;
 
 public class HTTPServerThread implements Runnable { 
 
@@ -38,11 +37,11 @@ public class HTTPServerThread implements Runnable {
 			input = connect.getInputStream();
 			output = connect.getOutputStream();
 			while(true) {
-				Header headerLine = readHeader(input);
-				if(headerLine.method.equals("POST")) {
-					if(headerLine.headers.containsKey("content-length") && headerLine.headers.containsKey("content-type")) {
-						String contentLength = headerLine.headers.get("content-length");
-						String contentType = headerLine.headers.get("content-type");
+				Header header = readHeader(input);
+				if(header.getMethod().equals("POST")) {
+					if(header.containsHeader("content-length") && header.containsHeader("content-type")) {
+						String contentLength = header.getHeader("content-length");
+						String contentType = header.getHeader("content-type");
 						if(contentType.equals("application/x-www-form-urlencoded")) {
 							try {
 								int contentSize = Integer.parseInt(contentLength.replaceAll("[^0-9]", ""));
@@ -50,23 +49,19 @@ public class HTTPServerThread implements Runnable {
 									byte[] data = new byte[contentSize];
 									int read = input.read(data, 0, contentSize);
 									String queryData = new String(data);
-									headerLine.postQuery = splitQuery(queryData);
+									header.postQuery = splitQuery(queryData);
 								}
 							} catch(NumberFormatException e) {
-								Response responseError = new Response();
-								responseError.stream = output;
+								Response responseError = new Response(output);
 								responseError.writeText("Invalid Content-Length");
 							}
 						}
 					}
 				}
 				
-				Request request = new Request();
-				request.header = headerLine;
-				request.stream = input;
+				Request request = new Request(input, header);
 
-				Response response = new Response();
-				response.stream = output;
+				Response response = new Response(output);
 
 				request.res = response;
 				response.req = request;
@@ -76,7 +71,7 @@ public class HTTPServerThread implements Runnable {
 				for (String key : this.map.keySet()) {
 					LinkedHashMap<String, String> parameters = new LinkedHashMap<String, String>();
 					String[] pathSegments = cleanPath(key).split("/");
-					String[] calledPathSegments = cleanPath(headerLine.path).split("/");
+					String[] calledPathSegments = cleanPath(header.getPath()).split("/");
 					int score = 0;
 					int requiredScore = Math.max(calledPathSegments.length, pathSegments.length);
 					for(int i = 0; i < Math.min(calledPathSegments.length, pathSegments.length); i++) {
@@ -107,20 +102,16 @@ public class HTTPServerThread implements Runnable {
 					response.writeText("Unable to process request");
 				}
 			}
-		} catch (SocketTimeoutException e) {
-
-		} catch (SocketException e) {
-
 		} catch (IOException e) {
 
-		} catch (Exception e) {
+		} catch(RequestException e) {
 			
 		} finally {
 			try {
 				input.close();
 				output.close();
 				connect.close();
-			} catch (Exception e) {
+			} catch (IOException e) {
 				
 			}
 		}
@@ -134,7 +125,7 @@ public class HTTPServerThread implements Runnable {
         return dynamicPath.substring(1, dynamicPath.length() - 1);
     }
 
-	private String readLine(InputStream in, int max) throws IOException, Exception {
+	private String readLine(InputStream in, int max) throws IOException, RequestException {
 		String result = new String();
 		while(true) {
 			int readed = in.read();
@@ -149,7 +140,7 @@ public class HTTPServerThread implements Runnable {
 					break;
 				}
 				if(result.length() > max) {
-					throw new Exception("Header Too Long");
+					throw new RequestException("Header Too Long");
 				}
 			} else {
 				throw new IOException("Socket closed before reaching to line break");
@@ -158,16 +149,16 @@ public class HTTPServerThread implements Runnable {
 		return result;
 	}
 
-	private Header readHeader(InputStream in) throws IOException, Exception, UnsupportedEncodingException {
+	private Header readHeader(InputStream in) throws IOException, RequestException {
 		Header head = new Header();
 
 
 		String stub = readLine(in, 65535);
 
 		StringTokenizer parse = new StringTokenizer(stub);
-		head.method = parse.nextToken().toUpperCase();
+		head.setMethod(parse.nextToken().toUpperCase());
 		StringTokenizer pathData = new StringTokenizer(parse.nextToken(), "?");
-		head.path = urlDecode(pathData.nextToken());
+		head.setPath(urlDecode(pathData.nextToken()));
 		if(pathData.countTokens() == 1) {
 			head.query = splitQuery(pathData.nextToken());
 		}

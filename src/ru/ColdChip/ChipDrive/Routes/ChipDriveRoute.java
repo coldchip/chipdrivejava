@@ -32,7 +32,6 @@ public class ChipDriveRoute {
 		server.on("/api/v1/drive/{method}", new HTTPRoute() {
 			@Override
 			public void handle(Request request, Response response) throws IOException {
-				String session = request.getSession();
 				String mode = request.getArgs("method");
 				switch(mode) {
 					case "files.list":

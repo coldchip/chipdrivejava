@@ -52,8 +52,7 @@ public class ChipDrive {
 
 	public void fileList(Request request, Response response) throws IOException {
 		try {
-			String token = request.getSession();
-			if(isAuthed(token) == true) {
+			if(isAuthed() == true) {
 				String props = request.getValue("props");
 				JSONObject propsJSON = new JSONObject(props);
 				String folderid = propsJSON.getString("folderid");
@@ -113,8 +112,7 @@ public class ChipDrive {
 
 	public void fileLink(Request request, Response response) throws IOException {
 		try {
-			String token = request.getSession();
-			if(isAuthed(token) == true) {
+			if(isAuthed() == true) {
 				try {
 					String props = request.getValue("props");
 					JSONObject propsJSON = new JSONObject(props);
@@ -157,8 +155,7 @@ public class ChipDrive {
 
 	public void fileUpload(Request request, Response response) throws IOException {
 		try {
-			String token = request.getSession();
-			if(isAuthed(token) == true) {
+			if(isAuthed() == true) {
 				String props = request.getValue("props");
 				JSONObject propsJSON = new JSONObject(props);
 				String folderid = propsJSON.getString("folderid");
@@ -213,8 +210,7 @@ public class ChipDrive {
 
 	public void fileDelete(Request request, Response response) throws IOException {
 		try {
-			String token = request.getSession();
-			if(isAuthed(token) == true) {
+			if(isAuthed() == true) {
 				String props = request.getValue("props");
 				JSONObject propsJSON = new JSONObject(props);
 				String itemid = propsJSON.getString("itemid");
@@ -247,8 +243,7 @@ public class ChipDrive {
 
 	public void newFolder(Request request, Response response) throws IOException {
 		try {
-			String token = request.getSession();
-			if(isAuthed(token) == true) {
+			if(isAuthed() == true) {
 				String props = request.getValue("props");
 				JSONObject propsJSON = new JSONObject(props);
 				String folderid = propsJSON.getString("folderid");
@@ -283,8 +278,7 @@ public class ChipDrive {
 
 	public void fileRename(Request request, Response response) throws IOException {
 		try {
-			String token = request.getSession();
-			if(isAuthed(token) == true) {
+			if(isAuthed() == true) {
 				String props = request.getValue("props");
 				JSONObject propsJSON = new JSONObject(props);
 				String itemid = propsJSON.getString("itemid");
@@ -318,8 +312,7 @@ public class ChipDrive {
 
 	public void fileInfo(Request request, Response response) throws IOException {
 		try {
-			String token = request.getSession();
-			if(isAuthed(token) == true) {
+			if(isAuthed() == true) {
 				String props = request.getValue("props");
 				JSONObject propsJSON = new JSONObject(props);
 				String fileid = propsJSON.getString("fileid");
@@ -354,8 +347,7 @@ public class ChipDrive {
 
 	public void driveQuota(Request request, Response response) throws IOException {
 		try {
-			String token = request.getSession();
-			if(isAuthed(token) == true) {
+			if(isAuthed() == true) {
 
 				Node node = new Node("", api);
 				node.load();
@@ -389,8 +381,7 @@ public class ChipDrive {
 
 	public void fileStream(Request request, Response response) throws IOException {
 		try {
-			String token = request.getSession();
-			if(isAuthed(token) == true) {
+			if(isAuthed() == true) {
 
 				String object = request.getArgs("object");
 
@@ -401,7 +392,7 @@ public class ChipDrive {
 					long objectSize = node.getSize();
 					long start = 0;
 					long end = objectSize - 1;
-					if(response.req.getSession("range").length() > 1) {
+					if(request.getHeader().containsHeader("range")) {
 						try {
 							start = request.getRangeStart();
 							end = request.getRangeEnd();
@@ -488,7 +479,7 @@ public class ChipDrive {
 		return name.substring(lastIndexOf + 1);
 	}
 
-	private boolean isAuthed(String token) {
+	private boolean isAuthed() {
 		return true;
 	}
 

@@ -17,6 +17,9 @@ public class Response {
 	private String sessionKey = "";
 	private String contentType = "text/html";
 	public Request req;
+	public Response(OutputStream stream) {
+		this.stream = stream;
+	}
 	public void writeHeader(String data) throws IOException {
 		data += "\r\n";
 		this.stream.write(data.getBytes(), 0, data.length());
@@ -86,7 +89,7 @@ public class Response {
 
 	public void serve(String root) throws IOException {
 		try {
-			String path = pathNormalize(this.req.header.path);
+			String path = pathNormalize(this.req.getHeader().getPath());
 			File target = new File(pathNormalize(root + "/" + path));
 			if(target.exists() == true && target.isDirectory() == false) {
 				writeFile(pathNormalize(root + "/" + path));
@@ -115,10 +118,10 @@ public class Response {
 		long objectSize = file.length();
 		long start = 0;
 		long end = objectSize - 1;
-		if(this.req.getSession("range").length() > 1) {
+		if(this.req.getHeader().containsHeader("range")) {
 			try {
-				start = Integer.parseInt(this.req.getSession("range").split("=")[1].split("-")[0].replaceAll("[^0-9]", ""));
-				end = Integer.parseInt(this.req.getSession("range").split("=")[1].split("-")[1].replaceAll("[^0-9]", ""));
+				start = Integer.parseInt(this.req.getHeader().getHeader("range").split("=")[1].split("-")[0].replaceAll("[^0-9]", ""));
+				end = Integer.parseInt(this.req.getHeader().getHeader("range").split("=")[1].split("-")[1].replaceAll("[^0-9]", ""));
 			} catch(Exception e) {}
 			if((start >= 0 && start < objectSize) && (end > 0 && end <= objectSize)) {
 				writeHeader("HTTP/1.1 206 Partial Content");
