@@ -149,14 +149,14 @@ function ChipDrive() {
 		}
 		$("controls").innerHTML = "";
 		var btn = $$("button");
-		btn.className = "controlsButton text";
+		btn.className = "controlsButton";
 		btn.onclick = function() {
 			that.folderIds = [];
 			that.folderNames = [];
 			that.getFiles();
 		}
 		var p = $$("span");
-		p.className = "controlsLabel";
+		p.className = "controlsLabel text";
 		p.innerHTML = "My Drive";
 		var i = $$("i");
 		i.className = "fa fa-chevron-right";
@@ -176,7 +176,7 @@ function ChipDrive() {
 			window.location.hash = that.getLast();
 			for(var i in that.folderIds) {
 				var btn = $$("button");
-				btn.className = "controlsButton text";
+				btn.className = "controlsButton";
 				btn.id = i;
 				btn.onclick = function() {
 					var pointsTo = that.folderIds[this.id];
@@ -185,7 +185,7 @@ function ChipDrive() {
 					that.getFiles(pointsTo);
 				};
 				var p = $$("span");
-				p.className = "controlsLabel";
+				p.className = "controlsLabel text";
 				p.innerHTML = that.folderNames[i];
 				var i = $$("i");
 				i.className = "fa fa-chevron-right";
