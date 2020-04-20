@@ -12,7 +12,7 @@ import java.util.*;
 import java.net.URLEncoder;
 import org.JSON.*;
 
-public class ChipDrive {
+public class ChipDrive implements IChipDrive {
 
 	ChipFS api = new ChipFS();
 

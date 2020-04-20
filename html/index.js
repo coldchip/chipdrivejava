@@ -3,7 +3,7 @@ window.onload = function() {
 }
 
 function chipDrive() {
-	window.location.href = "/admin";
+	window.location.href = "/drive";
 }
 
 function $(id) {

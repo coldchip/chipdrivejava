@@ -15,13 +15,13 @@ import java.nio.file.*;
 import java.util.regex.*;
 import ru.ColdChip.WebServer.Exceptions.*;
 
-public class HTTPServerThread implements Runnable { 
+public class ServerThread implements Runnable { 
 
 	private Socket connect;
 
 	private LinkedHashMap<String, HTTPRoute> map = new LinkedHashMap <String, HTTPRoute>();
 
-	public HTTPServerThread(LinkedHashMap<String, HTTPRoute> map) {
+	public ServerThread(LinkedHashMap<String, HTTPRoute> map) {
 		this.map = map;
 	}
 

@@ -16,6 +16,7 @@ public class Response {
 	private String sessionKey = "";
 	private String contentType = "text/html";
 	public Request req;
+
 	public Response(OutputStream stream) {
 		this.stream = stream;
 	}

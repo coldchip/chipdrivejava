@@ -18,14 +18,14 @@ var apps = {
 	            	new ContextualItem({icon: theme.previewIconData, label:'Open', onClick: () => {
 						// send("POST");
 					}}),
-					new ContextualItem({icon: "/admin/img/exit.png", label:'Sign Out', onClick: () => {
+					new ContextualItem({icon: "/drive/img/exit.png", label:'Sign Out', onClick: () => {
 							
 					}})
 	            ]
 	        });
 		};
 
-		$("logo").src = "admin/img/logo.png";
+		$("logo").src = "drive/img/logo.png";
 		$("backarrow").onclick = function() {
 			mainMenu();
 		}
