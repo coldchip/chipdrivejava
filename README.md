@@ -1,2 +1,1 @@
-# chipdrive
-Chip Drive Core
+![logo](https://github.com/coldchip/chipdrive/raw/master/docs/chipdrive.png)
