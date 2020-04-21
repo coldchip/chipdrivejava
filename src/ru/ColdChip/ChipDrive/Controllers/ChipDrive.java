@@ -360,52 +360,61 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 			if(isAuthed() == true) {
 
 				String object = request.getArgs("object");
-
-				try {
-					Node node = new Node(object);
+				
+				Node node = new Node(object);
+				if(node.exists()) {
 					node.load();
-					String objectName = node.getName();
-					long objectSize = node.getSize();
-					long start = 0;
-					long end = objectSize - 1;
-					if(request.containsHeader("range")) {
-						try {
-							start = request.getRangeStart();
-							end = request.getRangeEnd();
-						} catch(Exception e) {}
-						if((start >= 0 && start < objectSize) && (end > 0 && end <= objectSize)) {
-							response.writeHeader("HTTP/1.1 206 Partial Content");
-							response.writeHeader("Accept-Ranges: bytes");
-							response.writeHeader("Content-Range: bytes " + start + "-" + (end) + "/" + objectSize);
+					if(node.getType().equals("file")) {
+						String objectName = node.getName();
+						long objectSize = node.getSize();
+						long start = 0;
+						long end = objectSize - 1;
+						if(request.containsHeader("range")) {
+							try {
+								start = request.getRangeStart();
+								end = request.getRangeEnd();
+							} catch(Exception e) {}
+							if((start >= 0 && start < objectSize) && (end > 0 && end <= objectSize)) {
+								response.writeHeader("HTTP/1.1 206 Partial Content");
+								response.writeHeader("Accept-Ranges: bytes");
+								response.writeHeader("Content-Range: bytes " + start + "-" + (end) + "/" + objectSize);
+							} else {
+								response.writeHeader("HTTP/1.1 416 Requested Range Not Satisfiable");
+								response.writeHeader("Accept-Ranges: bytes");
+								return;
+							}
 						} else {
-							response.writeHeader("HTTP/1.1 416 Requested Range Not Satisfiable");
-							response.writeHeader("Accept-Ranges: bytes");
-							return;
+							response.writeHeader("HTTP/1.1 200 OK");
+							response.writeHeader("Content-Disposition: inline; filename=\"" + URLEncoder.encode(objectName, "UTF-8") + "\"");
+						}
+						response.writeHeader("Content-Type: " + MimeTypes.get(getExtension(objectName).toLowerCase()));
+						response.writeHeader("Content-Length: " + ((end - start) + 1));
+						response.writeHeader("Cache-Control: no-store");
+						response.writeHeader("Connection: Keep-Alive");
+						response.writeHeader("Keep-Alive: timeout=5, max=97");
+						response.writeHeader("Server: ColdChip Web Servlet/CWS 1.2");
+						response.writeHeader("");
+						int buffer = 8192 * 8;
+						byte[] b = new byte[buffer];
+						for(long p = start; p < end; p += buffer) {
+							int toRead = (int)Math.min(buffer, (end - p) + 1);
+							read(object, b, p, toRead);
+							response.writeByte(b, 0, toRead); 
+							response.flush();
 						}
 					} else {
-						response.writeHeader("HTTP/1.1 200 OK");
-						response.writeHeader("Content-Disposition: inline; filename=\"" + URLEncoder.encode(objectName, "UTF-8") + "\"");
+						JSONObject error = new JSONObject();
+						error.put("errorMsg", "Object not a type of file");
+						error.put("login", false);
+						sendError(response, error);
 					}
-					response.writeHeader("Content-Type: " + MimeTypes.get(getExtension(objectName).toLowerCase()));
-					response.writeHeader("Content-Length: " + ((end - start) + 1));
-					response.writeHeader("Cache-Control: no-store");
-					response.writeHeader("Connection: Keep-Alive");
-					response.writeHeader("Keep-Alive: timeout=5, max=97");
-					response.writeHeader("Server: ColdChip Web Servlet/CWS 1.2");
-					response.writeHeader("");
-					int buffer = 8192 * 8;
-					byte[] b = new byte[buffer];
-					for(long p = start; p < end; p += buffer) {
-						int toRead = (int)Math.min(buffer, (end - p) + 1);
-						read(object, b, p, toRead);
-						response.writeByte(b, 0, toRead); 
-						response.flush();
-					}
-				} catch(IOException e) {
-					throw new ChipDriveException("An error occured while communicating with data object");
-				} catch(Exception e) {
-					throw new ChipDriveException("Unknown error");
-				} 
+				} else {
+					JSONObject error = new JSONObject();
+					error.put("errorMsg", "Object doesn't exists");
+					error.put("login", false);
+					sendError(response, error);
+				}
+				
 			} else {
 				JSONObject error = new JSONObject();
 				error.put("errorMsg", "Login");

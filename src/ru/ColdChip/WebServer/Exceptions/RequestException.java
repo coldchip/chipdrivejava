@@ -13,6 +13,6 @@ public class RequestException extends Exception {
 	}
 
 	public String toString() {
-		return "CustomException[]";
+		return this.errorMsg;
 	}
 }

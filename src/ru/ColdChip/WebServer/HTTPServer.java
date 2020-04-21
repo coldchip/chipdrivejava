@@ -38,7 +38,6 @@ public class HTTPServer implements Runnable {
 				myServer.attachClient(client);
 				thread.start();
 				index++;
-				System.out.println(index);
 			}
 		} catch (IOException e) {
 			System.err.println("Server Connection error: " + e.getMessage());

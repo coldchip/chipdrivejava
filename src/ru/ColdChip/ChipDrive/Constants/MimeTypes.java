@@ -355,7 +355,7 @@ public class MimeTypes {
 	       mime.put(b, a);
 	}
 
-	public static String get(String ext) throws Exception {
+	public static String get(String ext) {
                 if(isInit == false) {
                         init();
                         isInit = true;
@@ -363,7 +363,7 @@ public class MimeTypes {
 		if(ext != null) {
 			return mime.get(ext.toLowerCase());
 		} else {
-			throw new Exception("");
+			return "application/octet-stream";
 		}
 	}
 }

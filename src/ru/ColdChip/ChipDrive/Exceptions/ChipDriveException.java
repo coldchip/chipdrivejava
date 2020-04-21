@@ -13,6 +13,6 @@ public class ChipDriveException extends Exception {
 	}
 
 	public String toString() {
-		return "CustomException[]";
+		return this.errorMsg;
 	}
 }
