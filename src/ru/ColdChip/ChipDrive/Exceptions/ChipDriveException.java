@@ -2,20 +2,17 @@ package ru.ColdChip.ChipDrive.Exceptions;
 
 public class ChipDriveException extends Exception {
 
-	public String msg = "ChipDriveException.Message.None";
+	private String errorMsg = "";
 
 	public ChipDriveException() {
-        this.msg = msg;
-        // Call super(parent) class
-    }
+		
+	}
 
-    public ChipDriveException(String msg) {
-        this.msg = msg;
-        // Call super(parent) class
-    }
+	public ChipDriveException(String errorMsg) {
+		this.errorMsg = errorMsg;
+	}
 
-    public String toString() {
-    	return this.msg;
-    }
-
+	public String toString() {
+		return "CustomException[]";
+	}
 }

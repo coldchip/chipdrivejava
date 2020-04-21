@@ -9,7 +9,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.JSON.JSONArray;
 import ru.ColdChip.ChipDrive.api.ChipFS;
 
-public class Node {
+public class Node extends ChipFS {
 	private String name = "";
 	private String id = "";
 	private String type = "";
@@ -20,7 +20,7 @@ public class Node {
 	private long creationDate = 0l;
 	private ChipFS api;
 	private static ReentrantReadWriteLock rwlock = new ReentrantReadWriteLock();
-	public Node(String id, ChipFS api) throws IOException {
+	public Node(String id) throws IOException {
 		if(id.equals("")) {
 			id = "home";
 		}
@@ -28,15 +28,15 @@ public class Node {
 		this.id = id;
 	}
 	public boolean exists() throws ChipDriveException {
-		return api.exists(this.id + ".db");
+		return exists(this.id + ".db");
 	}
 	public void load() throws ChipDriveException {
 		if(exists()) {
 			rwlock.readLock().lock();
 			try {
-				long dataSize = api.size(this.id + ".db");
+				long dataSize = size(this.id + ".db");
 				byte[] b = new byte[(int)dataSize];
-				api.read(this.id + ".db", b, 0, (int)dataSize);
+				read(this.id + ".db", b, 0, (int)dataSize);
 				JSONObject data = new JSONObject(new String(b));
 				this.name = data.getString("displayName");
 				this.id = data.getString("id");
@@ -68,9 +68,9 @@ public class Node {
 			returnData.put("objectType", this.type);
 			returnData.put("creationDate", this.creationDate);
 			String stringifiedData = returnData.toString();
-			api.delete(this.id + ".db");
-			api.create(this.id + ".db");
-			api.write(this.id + ".db", stringifiedData.getBytes(), 0, stringifiedData.length());
+			delete(this.id + ".db");
+			create(this.id + ".db");
+			write(this.id + ".db", stringifiedData.getBytes(), 0, stringifiedData.length());
 		} finally {
 			rwlock.writeLock().unlock();
 		}
@@ -133,7 +133,7 @@ public class Node {
 					
 					for(int i = 0; i < folderChildrens.length(); i++) {
 						String id = folderChildrens.getString(i);
-						if(new Node(id, api).exists() == true) {
+						if(new Node(id).exists() == true) {
 							results.add(id);
 						}
 					}
@@ -152,7 +152,7 @@ public class Node {
 	public void rename(String name) throws ChipDriveException {
 		try {
 			if(name.length() > 0 && name.length() < 8192) {
-				Node parent = new Node(getParentID(), api);
+				Node parent = new Node(getParentID());
 				if(parent.exists() == true) {
 					parent.load();
 					if(parent.hasChild(name) == true) {
@@ -172,12 +172,12 @@ public class Node {
 	public long getSize() throws ChipDriveException {
 		try {
 			if(getType().equals("file")) {
-				return api.size(getID());
+				return size(getID());
 			} else {
 				long folderSize = 0l;
 				ArrayList<String> items = list();
 				for(String item : items) {
-					Node currentNode = new Node(item, api);
+					Node currentNode = new Node(item);
 					currentNode.load();
 					folderSize += currentNode.getSize();
 				}
@@ -193,7 +193,7 @@ public class Node {
 			if(hasChild(name) == false && name.length() > 0 && name.length() < 8192) {
 				String random = randomString(32);
 
-				Node fn = new Node(random, api);
+				Node fn = new Node(random);
 				fn.setID(random);
 				fn.setName(name);
 				fn.setType("file");
@@ -219,7 +219,7 @@ public class Node {
 			if(hasChild(name) == false && name.length() > 0 && name.length() < 8192) {
 				String random = randomString(32);
 
-				Node fn = new Node(random, api);
+				Node fn = new Node(random);
 				fn.setID(random);
 				fn.setName(name);
 				fn.setType("folder");
@@ -245,7 +245,7 @@ public class Node {
 		ArrayList<String> files = list();
 		try {
 			for(String id : files) {
-				Node currentID = new Node(id, api);
+				Node currentID = new Node(id);
 				currentID.load();
 				if(currentID.getName().equals(name)) {
 					return true;
@@ -280,23 +280,23 @@ public class Node {
 	public void delete() throws ChipDriveException {
 		try {
 			if(getDeletable() == true) {
-				Node parent = new Node(getParentID(), api);
+				Node parent = new Node(getParentID());
 				if(parent.exists() == true) {
 					parent.load();
 					parent.removeChild(getID());
 					parent.update();
 				}
 				if(getType().equals("file")) {
-					api.delete(this.id + ".db");
-					api.delete(this.id);
+					delete(this.id + ".db");
+					delete(this.id);
 				} else {
 					ArrayList<String> items = list();
 					for(String item : items) {
-						Node currentNode = new Node(item, api);
+						Node currentNode = new Node(item);
 						currentNode.load();
 						currentNode.delete();
 					}
-					api.delete(this.id + ".db");
+					delete(this.id + ".db");
 				}
 			} else {
 				throw new ChipDriveException("Item is not deletable");

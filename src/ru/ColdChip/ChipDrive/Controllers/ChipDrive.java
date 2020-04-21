@@ -5,16 +5,13 @@ import ru.ColdChip.WebServer.*;
 import ru.ColdChip.ChipDrive.api.ChipFS;
 
 import ru.ColdChip.ChipDrive.Exceptions.*;
-import ru.ColdChip.WebServer.Exceptions.TokenNotFoundException;
 import ru.ColdChip.ChipDrive.Constants.MimeTypes;
 import java.io.*;
 import java.util.*;
 import java.net.URLEncoder;
 import org.JSON.*;
 
-public class ChipDrive implements IChipDrive {
-
-	ChipFS api = new ChipFS();
+public abstract class ChipDrive extends ChipFS implements IChipDrive {
 
 	public ChipDrive() {
 
@@ -55,7 +52,7 @@ public class ChipDrive implements IChipDrive {
 				JSONObject propsJSON = new JSONObject(props);
 				String folderid = propsJSON.getString("folderid");
 
-				Node node = new Node(folderid, api);
+				Node node = new Node(folderid);
 
 				if(folderid.equals("") && !node.exists()) {
 					node.setDeletable(false);
@@ -71,7 +68,7 @@ public class ChipDrive implements IChipDrive {
 
 				for(String fileID : files) {
 					JSONObject objectData = new JSONObject();
-					Node currentNode = new Node(fileID, api);
+					Node currentNode = new Node(fileID);
 					currentNode.load();
 					objectData.put("kind", currentNode.getType());
 					objectData.put("displayName", currentNode.getName());
@@ -85,25 +82,20 @@ public class ChipDrive implements IChipDrive {
 
 				sendMessage(response, meta);
 			} else {
-				throw new TokenNotFoundException();
+				JSONObject error = new JSONObject();
+				error.put("errorMsg", "Login");
+				error.put("login", true);
+				sendError(response, error);	
 			}
 		} catch(ChipDriveException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", e.toString());
 			error.put("login", false);
-			
 			sendError(response, error);
-		} catch(TokenNotFoundException e) {
-			JSONObject error = new JSONObject();
-			error.put("errorMsg", "Login");
-			error.put("login", true);
-			
-			sendError(response, error);		
 		} catch(JSONException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", e.toString());
 			error.put("login", false);
-			
 			sendError(response, error);
 		}
 	}
@@ -116,7 +108,7 @@ public class ChipDrive implements IChipDrive {
 					JSONObject propsJSON = new JSONObject(props);
 					String fileid = propsJSON.getString("fileid");
 
-					Node node = new Node(fileid, api);
+					Node node = new Node(fileid);
 					node.load();
 
 					String filename = node.getName();
@@ -131,18 +123,16 @@ public class ChipDrive implements IChipDrive {
 					throw new ChipDriveException("Unable to generate link");
 				}
 			} else {
-				throw new TokenNotFoundException();
+				JSONObject error = new JSONObject();
+				error.put("errorMsg", "Login");
+				error.put("login", true);
+				sendError(response, error);	
 			}
 		} catch(ChipDriveException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", e.toString());
 			error.put("login", false);
 			sendError(response, error);
-		} catch(TokenNotFoundException e) {
-			JSONObject error = new JSONObject();
-			error.put("errorMsg", "Login");
-			error.put("login", true);
-			sendError(response, error);		
 		} catch(JSONException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", "Invalid request data");
@@ -160,7 +150,7 @@ public class ChipDrive implements IChipDrive {
 				String name = propsJSON.getString("name");
 
 				try {
-					Node node = new Node(folderid, api);
+					Node node = new Node(folderid);
 					node.load();
 					node.setOwner("apps903923890.coldchip.ru.coldchip.0");
 					String fileid = node.createFile(name);
@@ -171,7 +161,7 @@ public class ChipDrive implements IChipDrive {
 						while (i < contentSize) {
 							int read = request.stream.read(data, 0, data.length);
 							if(read > 0) {
-								api.write(fileid, data, i, read);
+								write(fileid, data, i, read);
 								i += read;
 							} else {
 								throw new IOException("");
@@ -186,18 +176,16 @@ public class ChipDrive implements IChipDrive {
 
 				sendMessage(response, new JSONObject());
 			} else {
-				throw new TokenNotFoundException();
+				JSONObject error = new JSONObject();
+				error.put("errorMsg", "Login");
+				error.put("login", true);
+				sendError(response, error);	
 			}
 		} catch(ChipDriveException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", e.toString());
 			error.put("login", false);		
 			sendError(response, error);
-		} catch(TokenNotFoundException e) {
-			JSONObject error = new JSONObject();
-			error.put("errorMsg", "Login");
-			error.put("login", true);
-			sendError(response, error);		
 		} catch(JSONException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", "Invalid request data");
@@ -213,24 +201,22 @@ public class ChipDrive implements IChipDrive {
 				JSONObject propsJSON = new JSONObject(props);
 				String itemid = propsJSON.getString("itemid");
 
-				Node node = new Node(itemid, api);
+				Node node = new Node(itemid);
 				node.load();
 				node.delete();
 
 				sendMessage(response, new JSONObject());
 			} else {
-				throw new TokenNotFoundException();
+				JSONObject error = new JSONObject();
+				error.put("errorMsg", "Login");
+				error.put("login", true);
+				sendError(response, error);
 			}
 		} catch(ChipDriveException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", e.toString());
 			error.put("login", false);			
 			sendError(response, error);
-		} catch(TokenNotFoundException e) {
-			JSONObject error = new JSONObject();
-			error.put("errorMsg", "Login");
-			error.put("login", true);			
-			sendError(response, error);		
 		} catch(JSONException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", "Invalid request data");
@@ -247,25 +233,23 @@ public class ChipDrive implements IChipDrive {
 				String folderid = propsJSON.getString("folderid");
 				String name = propsJSON.getString("name");
 
-				Node node = new Node(folderid, api);
+				Node node = new Node(folderid);
 				node.load();
 				node.setOwner("");
 				node.createFolder(name);
 
 				sendMessage(response, new JSONObject());
 			} else {
-				throw new TokenNotFoundException();
+				JSONObject error = new JSONObject();
+				error.put("errorMsg", "Login");
+				error.put("login", true);
+				sendError(response, error);
 			}
 		} catch(ChipDriveException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", e.toString());
 			error.put("login", false);			
 			sendError(response, error);
-		} catch(TokenNotFoundException e) {
-			JSONObject error = new JSONObject();
-			error.put("errorMsg", "Login");
-			error.put("login", true);			
-			sendError(response, error);		
 		} catch(JSONException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", "Invalid request data");
@@ -282,24 +266,22 @@ public class ChipDrive implements IChipDrive {
 				String itemid = propsJSON.getString("itemid");
 				String name = propsJSON.getString("name");
 
-				Node node = new Node(itemid, api);
+				Node node = new Node(itemid);
 				node.load();
 				node.rename(name);
 
 				sendMessage(response, new JSONObject());
 			} else {
-				throw new TokenNotFoundException();
+				JSONObject error = new JSONObject();
+				error.put("errorMsg", "Login");
+				error.put("login", true);
+				sendError(response, error);
 			}
 		} catch(ChipDriveException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", e.toString());
 			error.put("login", false);			
 			sendError(response, error);
-		} catch(TokenNotFoundException e) {
-			JSONObject error = new JSONObject();
-			error.put("errorMsg", "Login");
-			error.put("login", true);			
-			sendError(response, error);	
 		} catch(JSONException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", "Invalid request data");
@@ -315,7 +297,7 @@ public class ChipDrive implements IChipDrive {
 				JSONObject propsJSON = new JSONObject(props);
 				String fileid = propsJSON.getString("fileid");
 
-				Node node = new Node(fileid, api);
+				Node node = new Node(fileid);
 				node.load();
 
 				JSONObject data = new JSONObject();
@@ -323,17 +305,15 @@ public class ChipDrive implements IChipDrive {
 
 				sendMessage(response, data);
 			} else {
-				throw new TokenNotFoundException();
+				JSONObject error = new JSONObject();
+				error.put("errorMsg", "Login");
+				error.put("login", true);
+				sendError(response, error);
 			}
 		} catch(ChipDriveException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", e.toString());
 			error.put("login", false);			
-			sendError(response, error);	
-		} catch(TokenNotFoundException e) {
-			JSONObject error = new JSONObject();
-			error.put("errorMsg", "Login");
-			error.put("login", true);			
 			sendError(response, error);	
 		} catch(JSONException e) {
 			JSONObject error = new JSONObject();
@@ -347,7 +327,7 @@ public class ChipDrive implements IChipDrive {
 		try {
 			if(isAuthed() == true) {
 
-				Node node = new Node("", api);
+				Node node = new Node("");
 				node.load();
 				long size = node.getSize();
 
@@ -357,18 +337,16 @@ public class ChipDrive implements IChipDrive {
 
 				sendMessage(response, data);
 			} else {
-				throw new TokenNotFoundException();
+				JSONObject error = new JSONObject();
+				error.put("errorMsg", "Login");
+				error.put("login", true);
+				sendError(response, error);
 			}
 		} catch(ChipDriveException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", e.toString());
 			error.put("login", false);		
 			sendError(response, error);
-		} catch(TokenNotFoundException e) {
-			JSONObject error = new JSONObject();
-			error.put("errorMsg", "Login");
-			error.put("login", true);		
-			sendError(response, error);			
 		} catch(JSONException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", "Invalid request data");
@@ -384,7 +362,7 @@ public class ChipDrive implements IChipDrive {
 				String object = request.getArgs("object");
 
 				try {
-					Node node = new Node(object, api);
+					Node node = new Node(object);
 					node.load();
 					String objectName = node.getName();
 					long objectSize = node.getSize();
@@ -419,7 +397,7 @@ public class ChipDrive implements IChipDrive {
 					byte[] b = new byte[buffer];
 					for(long p = start; p < end; p += buffer) {
 						int toRead = (int)Math.min(buffer, (end - p) + 1);
-						api.read(object, b, p, toRead);
+						read(object, b, p, toRead);
 						response.writeByte(b, 0, toRead); 
 						response.flush();
 					}
@@ -429,18 +407,16 @@ public class ChipDrive implements IChipDrive {
 					throw new ChipDriveException("Unknown error");
 				} 
 			} else {
-				throw new TokenNotFoundException();
+				JSONObject error = new JSONObject();
+				error.put("errorMsg", "Login");
+				error.put("login", true);
+				sendError(response, error);
 			}
 		} catch(ChipDriveException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", e.toString());
 			error.put("login", false);
 			sendError(response, error);
-		} catch(TokenNotFoundException e) {
-			JSONObject error = new JSONObject();
-			error.put("errorMsg", "Token Expired");
-			error.put("login", true);
-			sendError(response, error);		
 		} catch(JSONException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", "Invalid request data");

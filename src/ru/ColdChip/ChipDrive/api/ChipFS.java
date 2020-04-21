@@ -7,12 +7,6 @@ public class ChipFS {
 
 	private String root = "buckets";
 
-	private RandomAccessFile fatio;
-
-	private RandomAccessFile vectorio;
-
-	private RandomAccessFile rawio;
-
 	public ChipFS() {
 		
 	}
