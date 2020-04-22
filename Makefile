@@ -12,6 +12,6 @@ module:
 	@echo "-----Building 100%-----"
 	@echo "-----DONE-----"
 run:
-	$(JAVA) -jar Build/server.jar
+	$(JAVA) -jar build/server.jar
 runnohup:
 	nohup java -jar build/server.jar >/dev/null 2>&1 &
