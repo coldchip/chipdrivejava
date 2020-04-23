@@ -13,6 +13,8 @@ import org.JSON.*;
 
 public abstract class ChipDrive extends ChipFS implements IChipDrive {
 
+	private NodeTable table = new NodeTable();
+
 	public ChipDrive() {
 
 	}
@@ -52,15 +54,15 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 				JSONObject propsJSON = new JSONObject(props);
 				String folderid = propsJSON.getString("folderid");
 
-				Node node = new Node(folderid);
-
-				if(folderid.equals("") && !node.exists()) {
+				if(folderid.equals("") && !table.has(folderid)) {
+					Node node = new Node(folderid);
 					node.setDeletable(false);
-					node.setType("folder");
-					node.update();
+					node.setType(Node.FOLDER);
+					table.put(node);
+
 				}
 
-				node.load();
+				Node node = table.get(folderid);
 
 				ArrayList<String> files = node.list();
 
@@ -68,8 +70,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 
 				for(String fileID : files) {
 					JSONObject objectData = new JSONObject();
-					Node currentNode = new Node(fileID);
-					currentNode.load();
+					Node currentNode = table.get(fileID);
 					objectData.put("kind", currentNode.getType());
 					objectData.put("displayName", currentNode.getName());
 					objectData.put("id", fileID);
@@ -108,8 +109,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 					JSONObject propsJSON = new JSONObject(props);
 					String fileid = propsJSON.getString("fileid");
 
-					Node node = new Node(fileid);
-					node.load();
+					Node node = table.get(fileid);
 
 					String filename = node.getName();
 					JSONObject data = new JSONObject();
@@ -150,8 +150,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 				String name = propsJSON.getString("name");
 
 				try {
-					Node node = new Node(folderid);
-					node.load();
+					Node node = table.get(folderid);
 					node.setOwner("apps903923890.coldchip.ru.coldchip.0");
 					String fileid = node.createFile(name);
 					long contentSize = Long.parseLong(request.getHeader("content-length").replaceAll("[^0-9]", ""));
@@ -201,8 +200,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 				JSONObject propsJSON = new JSONObject(props);
 				String itemid = propsJSON.getString("itemid");
 
-				Node node = new Node(itemid);
-				node.load();
+				Node node = table.get(itemid);
 				node.delete();
 
 				sendMessage(response, new JSONObject());
@@ -233,8 +231,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 				String folderid = propsJSON.getString("folderid");
 				String name = propsJSON.getString("name");
 
-				Node node = new Node(folderid);
-				node.load();
+				Node node = table.get(folderid);
 				node.setOwner("");
 				node.createFolder(name);
 
@@ -266,10 +263,9 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 				String itemid = propsJSON.getString("itemid");
 				String name = propsJSON.getString("name");
 
-				Node node = new Node(itemid);
-				node.load();
+				Node node = table.get(itemid);
 				node.rename(name);
-
+				table.put(node);
 				sendMessage(response, new JSONObject());
 			} else {
 				JSONObject error = new JSONObject();
@@ -297,11 +293,10 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 				JSONObject propsJSON = new JSONObject(props);
 				String fileid = propsJSON.getString("fileid");
 
-				Node node = new Node(fileid);
-				node.load();
+				Node node = table.get(fileid);
 
 				JSONObject data = new JSONObject();
-				data.put("size", node.getSize());
+				data.put("size", 0);
 
 				sendMessage(response, data);
 			} else {
@@ -327,9 +322,8 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 		try {
 			if(isAuthed() == true) {
 
-				Node node = new Node("");
-				node.load();
-				long size = node.getSize();
+				Node node = table.get("");
+				long size = 0;
 
 				JSONObject data = new JSONObject();
 				data.put("used", size);
@@ -361,12 +355,12 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 
 				String object = request.getArgs("object");
 				
-				Node node = new Node(object);
-				if(node.exists()) {
-					node.load();
-					if(node.getType().equals("file")) {
+				
+				if(table.has(object)) {
+					Node node = table.get(object);
+					if(node.getType() == Node.FILE) {
 						String objectName = node.getName();
-						long objectSize = node.getSize();
+						long objectSize = size(object);
 						long start = 0;
 						long end = objectSize - 1;
 						if(request.containsHeader("range")) {
@@ -396,6 +390,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 						response.writeHeader("");
 						int buffer = 8192 * 8;
 						byte[] b = new byte[buffer];
+						System.out.println(object);
 						for(long p = start; p < end; p += buffer) {
 							int toRead = (int)Math.min(buffer, (end - p) + 1);
 							read(object, b, p, toRead);

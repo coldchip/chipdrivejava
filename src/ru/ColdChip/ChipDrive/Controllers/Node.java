@@ -3,16 +3,18 @@ package ru.ColdChip.ChipDrive.Controllers;
 import java.util.Iterator;
 import ru.ColdChip.ChipDrive.Exceptions.ChipDriveException;
 import java.util.ArrayList;
-import org.JSON.JSONObject;
+import org.JSON.*;
 import java.io.IOException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import org.JSON.JSONArray;
 import ru.ColdChip.ChipDrive.api.ChipFS;
 
-public class Node extends ChipFS {
+public class Node extends NodeTable {
+	public static int FOLDER = 0;
+	public static int FILE = 1;
+
 	private String name = "";
 	private String id = "";
-	private String type = "";
+	private int type = 0;
 	private boolean deletable = true;
 	private String parentid = "";
 	private JSONArray childrens = new JSONArray();
@@ -20,65 +22,39 @@ public class Node extends ChipFS {
 	private long creationDate = 0l;
 	private ChipFS api;
 	private static ReentrantReadWriteLock rwlock = new ReentrantReadWriteLock();
-	public Node(String id) throws IOException {
+	public Node(String id) {
 		if(id.equals("")) {
 			id = "home";
 		}
-		this.api = api;
 		this.id = id;
 	}
-	public boolean exists() throws ChipDriveException {
-		return exists(this.id + ".db");
+	public Node(JSONObject json) {
+		this.name = json.getString("displayName");
+		this.id = json.getString("id");
+		this.owner = json.getString("owner");
+		this.parentid = json.getString("parentid");
+		this.type = json.getInt("objectType");
+		this.deletable = json.getBoolean("deletable");
+		this.creationDate = json.getLong("creationDate");
+		this.childrens = json.getJSONArray("children");
 	}
-	public void load() throws ChipDriveException {
-		if(exists()) {
-			rwlock.readLock().lock();
-			try {
-				long dataSize = size(this.id + ".db");
-				byte[] b = new byte[(int)dataSize];
-				read(this.id + ".db", b, 0, (int)dataSize);
-				JSONObject data = new JSONObject(new String(b));
-				this.name = data.getString("displayName");
-				this.id = data.getString("id");
-				this.owner = data.getString("owner");
-				this.parentid = data.getString("parentid");
-				this.type = data.getString("objectType");
-				this.deletable = data.getBoolean("deletable");
-				this.creationDate = data.getLong("creationDate");
-				this.childrens = data.getJSONArray("children");
-			} catch(IOException e) {
-				throw new ChipDriveException("Database connection error");
-			} finally {
-				rwlock.readLock().unlock();
-			}
-		} else {
-			throw new ChipDriveException("Object doesn't exist");
-		}
+	
+	public JSONObject export() {
+		JSONObject json = new JSONObject();
+		json.put("displayName", this.name);
+		json.put("id", this.id);
+		json.put("deletable", this.deletable);
+		json.put("owner", this.owner);
+		json.put("parentid", this.parentid);
+		json.put("children", this.childrens);
+		json.put("objectType", this.type);
+		json.put("creationDate", this.creationDate);
+		return json;
 	}
-	public void update() throws IOException {
-		rwlock.writeLock().lock();
-		try {
-			JSONObject returnData = new JSONObject();
-			returnData.put("displayName", this.name);
-			returnData.put("id", this.id);
-			returnData.put("deletable", this.deletable);
-			returnData.put("owner", this.owner);
-			returnData.put("parentid", this.parentid);
-			returnData.put("children", this.childrens);
-			returnData.put("objectType", this.type);
-			returnData.put("creationDate", this.creationDate);
-			String stringifiedData = returnData.toString();
-			delete(this.id + ".db");
-			create(this.id + ".db");
-			write(this.id + ".db", stringifiedData.getBytes(), 0, stringifiedData.length());
-		} finally {
-			rwlock.writeLock().unlock();
-		}
-	}
-	public String getType() {
+	public int getType() {
 		return this.type;
 	}
-	public void setType(String type) {
+	public void setType(int type) {
 		this.type = type;
 	}
 	public void setParentID(String parentid) {
@@ -124,142 +100,101 @@ public class Node extends ChipFS {
 		return this.childrens;
 	}
 	public ArrayList<String> list() throws ChipDriveException {
-		try {
-			if(exists() == true) {
-				if(getType().equals("folder")) {
-					JSONArray folderChildrens = getChild();
-					
-					ArrayList<String> results = new ArrayList<String>();
-					
-					for(int i = 0; i < folderChildrens.length(); i++) {
-						String id = folderChildrens.getString(i);
-						if(new Node(id).exists() == true) {
-							results.add(id);
-						}
+		if(super.has(this.getID()) == true) {
+			if(this.getType() == Node.FOLDER) {
+				JSONArray folderChildrens = this.getChild();
+				
+				ArrayList<String> results = new ArrayList<String>();
+				
+				for(int i = 0; i < folderChildrens.length(); i++) {
+					String id = folderChildrens.getString(i);
+					if(super.has(id) == true) {
+						results.add(id);
 					}
-					return results;
-				} else {
-					throw new ChipDriveException("::objectType:: is not a type of folder");
 				}
+				return results;
 			} else {
-				throw new ChipDriveException("Folder doesn't exist");
+				throw new ChipDriveException("::objectType:: is not a type of folder");
 			}
-		} catch(IOException e) {
-			throw new ChipDriveException("Database Connection Error");
+		} else {
+			throw new ChipDriveException("Folder doesn't exist");
 		}
 	}
 
 	public void rename(String name) throws ChipDriveException {
-		try {
-			if(name.length() > 0 && name.length() < 8192) {
-				Node parent = new Node(getParentID());
-				if(parent.exists() == true) {
-					parent.load();
-					if(parent.hasChild(name) == true) {
-						throw new ChipDriveException("Object already existed");
-					}
+		if(name.length() > 0 && name.length() < 8192) {
+			String parentID = this.getParentID();
+			if(super.has(parentID) == true) {
+				Node parent = super.get(parentID);
+				if(parent.hasChild(name) == true) {
+					throw new ChipDriveException("Object already existed");
 				}
-				setName(name);
-				update();
-			} else {
-				throw new ChipDriveException("Name too long");
 			}
-		} catch(IOException e) {
-			throw new ChipDriveException("Unable to connect to database");
+			this.setName(name);
+		} else {
+			throw new ChipDriveException("Name too long");
 		}
 	}
 
-	public long getSize() throws ChipDriveException {
-		try {
-			if(getType().equals("file")) {
-				return size(getID());
-			} else {
-				long folderSize = 0l;
-				ArrayList<String> items = list();
-				for(String item : items) {
-					Node currentNode = new Node(item);
-					currentNode.load();
-					folderSize += currentNode.getSize();
-				}
-				return folderSize;
-			}
-		} catch(IOException e) {
-			throw new ChipDriveException("Compute value error");
-		} 
-	}
-
 	public String createFile(String name) throws ChipDriveException {
-		try {
-			if(hasChild(name) == false && name.length() > 0 && name.length() < 8192) {
-				String random = randomString(32);
+		if(this.hasChild(name) == false && name.length() > 0 && name.length() < 8192) {
+			String random = this.randomString(32);
 
-				Node fn = new Node(random);
-				fn.setID(random);
-				fn.setName(name);
-				fn.setType("file");
-				fn.setParentID(getID());
-				fn.setOwner(getOwner());
-				fn.setCreationDate(System.currentTimeMillis() / 1000);
-				fn.update();
+			Node node = new Node(random);
+			node.setID(random);
+			node.setName(name);
+			node.setType(Node.FILE);
+			node.setParentID(this.getID());
+			node.setOwner(this.getOwner());
+			node.setCreationDate(System.currentTimeMillis() / 1000);
+			super.put(node);
 
-				addChild(fn);
-				update();
+			this.addChild(node);
+			super.put(this);
 
-				return random;
-			} else {
-				throw new ChipDriveException("Object already existed");
-			}
-		} catch(IOException e) {
-			throw new ChipDriveException("Unable to connect to database");
+			return random;
+		} else {
+			throw new ChipDriveException("Object already existed");
 		}
 	}
 
 	public String createFolder(String name) throws ChipDriveException {
-		try {
-			if(hasChild(name) == false && name.length() > 0 && name.length() < 8192) {
-				String random = randomString(32);
+		if(this.hasChild(name) == false && name.length() > 0 && name.length() < 8192) {
+			String random = randomString(32);
 
-				Node fn = new Node(random);
-				fn.setID(random);
-				fn.setName(name);
-				fn.setType("folder");
-				fn.setParentID(getID());
-				fn.setOwner(getOwner());
-				fn.setCreationDate(System.currentTimeMillis() / 1000);
-				fn.update();
+			Node node = new Node(random);
+			node.setID(random);
+			node.setName(name);
+			node.setType(Node.FOLDER);
+			node.setParentID(this.getID());
+			node.setOwner(this.getOwner());
+			node.setCreationDate(System.currentTimeMillis() / 1000);
+			super.put(node);
 
-				addChild(fn);
-				update();
+			this.addChild(node);
+			super.put(this);
 
-				return random;
-			} else {
-				throw new ChipDriveException("Object already existed");
-			}
-		} catch(IOException e) {
-			throw new ChipDriveException("Unable to connect to database");
+			return random;
+		} else {
+			throw new ChipDriveException("Object already existed");
 		}
 	}
 
 	public boolean hasChild(String name) throws ChipDriveException {
 		
-		ArrayList<String> files = list();
-		try {
-			for(String id : files) {
-				Node currentID = new Node(id);
-				currentID.load();
-				if(currentID.getName().equals(name)) {
-					return true;
-				}
+		ArrayList<String> files = this.list();
+		for(String id : files) {
+			Node currentID = super.get(id);
+			if(currentID.getName().equals(name)) {
+				return true;
 			}
-			return false;
-		} catch(IOException e) {
-			throw new ChipDriveException("Unable to connect to database");
 		}
+		return false;
 	}
 
 	public boolean hasChildID(String id) throws ChipDriveException {
 		
-		ArrayList<String> files = list();
+		ArrayList<String> files = this.list();
 		for(String currentID : files) {
 			if(currentID.equals(id)) {
 				return true;
@@ -279,24 +214,22 @@ public class Node extends ChipFS {
 	}
 	public void delete() throws ChipDriveException {
 		try {
-			if(getDeletable() == true) {
-				Node parent = new Node(getParentID());
-				if(parent.exists() == true) {
-					parent.load();
-					parent.removeChild(getID());
-					parent.update();
+			if(this.getDeletable() == true) {
+				String parentID = this.getParentID();
+				if(super.has(parentID) == true) {
+					Node node = super.get(parentID);
+					node.removeChild(this.getID());
+					super.put(node);
 				}
-				if(getType().equals("file")) {
-					delete(this.id + ".db");
-					delete(this.id);
+				if(this.getType() == Node.FILE) {
+					super.remove(this.id);
 				} else {
 					ArrayList<String> items = list();
 					for(String item : items) {
-						Node currentNode = new Node(item);
-						currentNode.load();
+						Node currentNode = super.get(item);
 						currentNode.delete();
 					}
-					delete(this.id + ".db");
+					super.remove(this.id);
 				}
 			} else {
 				throw new ChipDriveException("Item is not deletable");
