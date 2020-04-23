@@ -201,8 +201,8 @@ function ChipDrive() {
 	        if (list.length > 0) {
 				var driveContents = that.innerFrame;
 	            for (var b in list) {
-					var type = list[b]["kind"].replace(/[^a-z0-9]/gi, '');
-					var itemName = (list[b]["displayName"]);
+					var type = list[b]["kind"];
+					var itemName = list[b]["displayName"];
 					var itemId = list[b]["id"];
 					driveContents.appendChild(makeHTML(itemId, itemName, type, theme, b));	
 	            }
@@ -279,7 +279,7 @@ function ChipDrive() {
 	        }, false);
 			var icon = document.createElement("img");
 						icon.className = "itemWrapperIcon";
-						if(type == "file"){
+						if(type == 1){
 							var ext = itemName.substr(itemName.lastIndexOf('.') + 1).toLowerCase();
 							if(imageExt.indexOf(ext) >= 0) {
 								icon.src = (img.imgIconData);
@@ -315,7 +315,7 @@ function ChipDrive() {
 							icon.src = (img.folIconImageData);
 						}
 						icon.onclick = function() {
-							type == "file" ? that.openFile(itemId) : that.getFiles(itemId);
+							type == 1 ? that.openFile(itemId) : that.getFiles(itemId);
 						};
 			itemWrapper.appendChild(icon);
 			
@@ -323,7 +323,7 @@ function ChipDrive() {
 						button.className = "text itemWrapperButton";
 						button.innerHTML = itemName;
 						button.onclick = function() {
-							type == "file" ? that.openFile(itemId) : that.getFiles(itemId);
+							type == 1 ? that.openFile(itemId) : that.getFiles(itemId);
 						};
 			itemWrapper.appendChild(button);
 			
@@ -533,7 +533,7 @@ function ChipDrive() {
             		that.fileInfo(id);
             	}})
 		];
-		if(type == "file") {
+		if(type == 1) {
 			new Contextual({
 	            isSticky: false,
 	            items: fileType

@@ -12,7 +12,6 @@ public class NodeTable {
 	}
 
 	public Node get(String id) throws ChipDriveException {
-		System.out.println(list.toString(4));
 		if(id.equals("")) {
 			id = "home";
 		}

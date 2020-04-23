@@ -390,7 +390,6 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 						response.writeHeader("");
 						int buffer = 8192 * 8;
 						byte[] b = new byte[buffer];
-						System.out.println(object);
 						for(long p = start; p < end; p += buffer) {
 							int toRead = (int)Math.min(buffer, (end - p) + 1);
 							read(object, b, p, toRead);
