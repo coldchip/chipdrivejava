@@ -13,7 +13,7 @@ import org.JSON.*;
 
 public abstract class ChipDrive extends ChipFS implements IChipDrive {
 
-	private NodeTable table = new NodeTable();
+	private NodeRoot table = new NodeRoot();
 
 	public ChipDrive() {
 
@@ -55,33 +55,41 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 				String folderid = propsJSON.getString("folderid");
 
 				if(folderid.equals("") && !table.has(folderid)) {
-					Node node = new Node(folderid);
-					node.setDeletable(false);
-					node.setType(Node.FOLDER);
-					table.put(node);
-
+					NodeRoot root = new NodeRoot();
+					FolderObject folder = new FolderObject();
+					folder.setName("home");
+					folder.setID("home");
+					root.put(folder);
 				}
 
 				Node node = table.get(folderid);
+				if(node instanceof FolderObject) {
+					FolderObject folder = (FolderObject)node;
+					ArrayList<String> files = folder.list();
 
-				ArrayList<String> files = node.list();
+					JSONArray list = new JSONArray();
 
-				JSONArray list = new JSONArray();
+					for(String fileID : files) {
+						JSONObject objectData = new JSONObject();
+						Node currentNode = table.get(fileID);
+						if(currentNode instanceof FolderObject) {
+							objectData.put("kind", 0);
+						} else {
+							objectData.put("kind", 1);
+						}
+						objectData.put("displayName", currentNode.getName());
+						objectData.put("id", fileID);
+						list.put(objectData);
+					}
 
-				for(String fileID : files) {
-					JSONObject objectData = new JSONObject();
-					Node currentNode = table.get(fileID);
-					objectData.put("kind", currentNode.getType());
-					objectData.put("displayName", currentNode.getName());
-					objectData.put("id", fileID);
-					list.put(objectData);
+					JSONObject meta = new JSONObject();
+					meta.put("list", list);
+					meta.put("displayName", node.getName());
+
+					sendMessage(response, meta);
+				} else {
+					throw new ChipDriveException("Not a folder");
 				}
-
-				JSONObject meta = new JSONObject();
-				meta.put("list", list);
-				meta.put("displayName", node.getName());
-
-				sendMessage(response, meta);
 			} else {
 				JSONObject error = new JSONObject();
 				error.put("errorMsg", "Login");
@@ -104,24 +112,25 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 	public void fileLink(Request request, Response response) throws IOException {
 		try {
 			if(isAuthed() == true) {
-				try {
 					String props = request.getValue("props");
 					JSONObject propsJSON = new JSONObject(props);
 					String fileid = propsJSON.getString("fileid");
 
 					Node node = table.get(fileid);
+					if(node instanceof FileObject) {
+						FileObject folder = (FileObject)node;
+						String filename = folder.getName();
+						JSONObject data = new JSONObject();
+						data.put("type", MimeTypes.get(getExtension(filename).toLowerCase()));
+						data.put("ext", getExtension(filename).toLowerCase());
+						data.put("displayName", filename);
+						data.put("url", "/api/v1/drive/item.stream/" + fileid);
 
-					String filename = node.getName();
-					JSONObject data = new JSONObject();
-					data.put("type", MimeTypes.get(getExtension(filename).toLowerCase()));
-					data.put("ext", getExtension(filename).toLowerCase());
-					data.put("displayName", filename);
-					data.put("url", "/api/v1/drive/item.stream/" + fileid);
-
-					sendMessage(response, data);
-				} catch(Exception e) {
-					throw new ChipDriveException("Unable to generate link");
-				}
+						sendMessage(response, data);
+					} else {
+						throw new ChipDriveException("Not a folder");
+					}
+			
 			} else {
 				JSONObject error = new JSONObject();
 				error.put("errorMsg", "Login");
@@ -150,9 +159,20 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 				String name = propsJSON.getString("name");
 
 				try {
-					Node node = table.get(folderid);
-					node.setOwner("apps903923890.coldchip.ru.coldchip.0");
-					String fileid = node.createFile(name);
+					String randomID = randomString(32);
+
+					NodeRoot root = new NodeRoot();
+
+					FileObject file = new FileObject();
+					file.setName(name);
+					file.setID(randomID);
+					file.setParentID(folderid);
+					file.put(file);
+
+					FolderObject rootDir = (FolderObject)root.get(folderid);
+					rootDir.addChild(file);
+					root.put(rootDir);
+
 					long contentSize = Long.parseLong(request.getHeader("content-length").replaceAll("[^0-9]", ""));
 					if(contentSize > 0) {
 						long i = 0;
@@ -160,7 +180,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 						while (i < contentSize) {
 							int read = request.stream.read(data, 0, data.length);
 							if(read > 0) {
-								write(fileid, data, i, read);
+								write(randomID, data, i, read);
 								i += read;
 							} else {
 								throw new IOException("");
@@ -193,6 +213,26 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
+	private void deleteRecursive(Node node) throws ChipDriveException {
+		NodeRoot root = new NodeRoot();
+		
+		FolderObject parent = (FolderObject)root.get(node.getParentID());
+		parent.removeChild(node.getID());
+		root.put(parent);
+
+		if(node instanceof FileObject) {
+			root.remove(node.getID());
+		} else {
+			FolderObject folder = (FolderObject)node;
+			ArrayList<String> items = folder.list();
+			for(String item : items) {
+				Node currentNode = root.get(item);
+				deleteRecursive(currentNode);
+			}
+			root.remove(node.getID());
+		}
+	}
+
 	public void fileDelete(Request request, Response response) throws IOException {
 		try {
 			if(isAuthed() == true) {
@@ -200,8 +240,9 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 				JSONObject propsJSON = new JSONObject(props);
 				String itemid = propsJSON.getString("itemid");
 
-				Node node = table.get(itemid);
-				node.delete();
+				NodeRoot root = new NodeRoot();
+				Node node = root.get(itemid);
+				deleteRecursive(node);
 
 				sendMessage(response, new JSONObject());
 			} else {
@@ -231,9 +272,19 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 				String folderid = propsJSON.getString("folderid");
 				String name = propsJSON.getString("name");
 
-				Node node = table.get(folderid);
-				node.setOwner("");
-				node.createFolder(name);
+				String randomID = randomString(32);
+
+				NodeRoot root = new NodeRoot();
+
+				FolderObject folder = new FolderObject();
+				folder.setName(name);
+				folder.setID(randomID);
+				folder.setParentID(folderid);
+				root.put(folder);
+
+				FolderObject rootDir = (FolderObject)root.get(folderid);
+				rootDir.addChild(folder);
+				root.put(rootDir);
 
 				sendMessage(response, new JSONObject());
 			} else {
@@ -263,9 +314,11 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 				String itemid = propsJSON.getString("itemid");
 				String name = propsJSON.getString("name");
 
-				Node node = table.get(itemid);
-				node.rename(name);
-				table.put(node);
+				NodeRoot root = new NodeRoot();
+				Node node = root.get(itemid);
+				node.setName(name);
+				root.put(node);
+
 				sendMessage(response, new JSONObject());
 			} else {
 				JSONObject error = new JSONObject();
@@ -358,7 +411,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 				
 				if(table.has(object)) {
 					Node node = table.get(object);
-					if(node.getType() == Node.FILE) {
+					if(node instanceof FileObject) {
 						String objectName = node.getName();
 						long objectSize = size(object);
 						long start = 0;
@@ -454,6 +507,16 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 		    return ""; // empty extension
 		}
 		return name.substring(lastIndexOf + 1);
+	}
+
+	private static String randomString(int length) {
+		final String list = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
+		StringBuilder results = new StringBuilder();
+		for(int i = 0; i < length; i++) {
+			int character = (int)(Math.random() * list.length());
+			results.append(list.charAt(character));
+		}
+		return results.toString();
 	}
 
 	private boolean isAuthed() {

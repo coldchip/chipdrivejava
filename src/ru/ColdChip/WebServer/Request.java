@@ -31,7 +31,7 @@ public class Request {
 		return Long.parseLong(getHeader("range").split("=")[1].split("-")[0].replaceAll("[^0-9]", ""));
 	}
 	public long getRangeEnd() throws Exception {
-		return Long.parseLong(getHeader("range").split("=")[1].split("-")[1].replaceAll("[^0-9]", ""));
+		return Long.parseLong(getHeader("range").replaceAll("[^0-9]", ""));
 	}
 	public void setArgs(LinkedHashMap<String, String> val) {
 		this.args = val;
