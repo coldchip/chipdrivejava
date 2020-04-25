@@ -26,6 +26,18 @@ public class Server {
 		ChipDrive drive = new ChipDrive();
 
 		HTTPServer server = new HTTPServer(PORT);
+
+		server.on("/api/v1/login/state", new HTTPRoute() {
+			@Override public void handle(Request request, Response response) throws IOException {
+				response.writeText("{\"state\":\"NOT_LOGGED_IN\"}");
+			}
+		});
+
+		server.on("/api/v1/login", new HTTPRoute() {
+			@Override public void handle(Request request, Response response) throws IOException {
+				response.writeText("{\"message\":\"Backend Error\"}");
+			}
+		});
 		
 		server.on("/api/v1/version", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {

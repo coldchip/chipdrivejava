@@ -35,31 +35,37 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	public static final int STREAM  = 11;
 	public static final int UNKNOWN = 12;
 
+	private static volatile int threads = 0;
+
 	public ChipDrive() {
 
 	}
 
 	public void enqueue(int method, Request request, Response response) throws IOException {
-		this.dispatch(method, request, response);
+		try {
+			threads++;
+			if(threads < 255) {
+				this.dispatch(method, request, response);
+			} else {
+				JSONObject error = new JSONObject();
+				error.put("errorMsg", "Server is overloaded");
+				error.put("login", false);
+				sendError(response, error);
+			}
+		} finally {
+			threads--;
+		}
 	}
 
 	private void dispatch(int method, Request request, Response response) throws IOException {
 		try {
 			switch(method) {
 				case ChipDrive.VERSION: {
-					if(isAuthed() == true) {
-						this.version(request, response);
-					} else {
-						throw new ChipDriveLoginException("Login Required");
-					}
+					this.version(request, response);
 				}
 				break;
 				case ChipDrive.CONFIG: {
-					if(isAuthed() == true) {
-						this.config(request, response);
-					} else {
-						throw new ChipDriveLoginException("Login Required");
-					}
+					this.config(request, response);
 				}
 				break;
 				case ChipDrive.LIST: {
@@ -151,7 +157,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		} catch(ChipDriveLoginException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", e.toString());
-			error.put("login", false);
+			error.put("login", true);
 			sendError(response, error);
 		}
 	}
