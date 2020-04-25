@@ -20,7 +20,7 @@ public class Server {
 	}
 
 	private void core() {
-		System.out.println("ColdChip Drive V2.3 Java");
+		System.out.println("ColdChip Drive V2.3.1 Java");
 		System.out.println("--------------------------");
 
 		ChipDrive drive = new ChipDrive();
@@ -86,10 +86,7 @@ public class Server {
 					break;
 					default:
 						{
-							JSONObject j = new JSONObject();
-							j.put("errorMsg", "UnknownModeException");
-							j.put("login", false);
-							drive.sendError(response, j);
+							drive.enqueue(ChipDrive.UNKNOWN, request, response);
 						}
 					break;
 				}
