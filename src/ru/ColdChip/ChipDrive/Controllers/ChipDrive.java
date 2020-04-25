@@ -13,8 +13,6 @@ import org.JSON.*;
 
 public abstract class ChipDrive extends ChipFS implements IChipDrive {
 
-	private NodeRoot table = new NodeRoot();
-
 	public ChipDrive() {
 
 	}
@@ -54,15 +52,15 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 				JSONObject propsJSON = new JSONObject(props);
 				String folderid = propsJSON.getString("folderid");
 
-				if(folderid.equals("") && !table.has(folderid)) {
-					NodeRoot root = new NodeRoot();
+				NodeRoot root = new NodeRoot();
+				if(folderid.equals("") && !root.has(folderid)) {
 					FolderObject folder = new FolderObject();
 					folder.setName("home");
 					folder.setID("home");
 					root.put(folder);
 				}
 
-				Node node = table.get(folderid);
+				Node node = root.get(folderid);
 				if(node instanceof FolderObject) {
 					FolderObject folder = (FolderObject)node;
 					ArrayList<String> files = folder.list();
@@ -71,7 +69,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 
 					for(String fileID : files) {
 						JSONObject objectData = new JSONObject();
-						Node currentNode = table.get(fileID);
+						Node currentNode = root.get(fileID);
 						if(currentNode instanceof FolderObject) {
 							objectData.put("kind", 0);
 						} else {
@@ -116,7 +114,8 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 					JSONObject propsJSON = new JSONObject(props);
 					String fileid = propsJSON.getString("fileid");
 
-					Node node = table.get(fileid);
+					NodeRoot root = new NodeRoot();
+					Node node = root.get(fileid);
 					if(node instanceof FileObject) {
 						FileObject folder = (FileObject)node;
 						String filename = folder.getName();
@@ -346,7 +345,9 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 				JSONObject propsJSON = new JSONObject(props);
 				String fileid = propsJSON.getString("fileid");
 
-				Node node = table.get(fileid);
+				NodeRoot root = new NodeRoot();
+
+				Node node = root.get(fileid);
 
 				JSONObject data = new JSONObject();
 				data.put("size", 0);
@@ -375,7 +376,9 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 		try {
 			if(isAuthed() == true) {
 
-				Node node = table.get("");
+				NodeRoot root = new NodeRoot();
+
+				Node node = root.get("");
 				long size = 0;
 
 				JSONObject data = new JSONObject();
@@ -406,25 +409,26 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 		try {
 			if(isAuthed() == true) {
 
-				String object = request.getArgs("object");
+				String fileid = request.getArgs("object");
 				
+				NodeRoot root = new NodeRoot();
 				
-				if(table.has(object)) {
-					Node node = table.get(object);
+				if(root.has(fileid)) {
+					Node node = root.get(fileid);
 					if(node instanceof FileObject) {
-						String objectName = node.getName();
-						long objectSize = size(object);
+						String name = node.getName();
+						long size = size(fileid);
 						long start = 0;
-						long end = objectSize - 1;
+						long end = size - 1;
 						if(request.containsHeader("range")) {
 							try {
 								start = request.getRangeStart();
 								end = request.getRangeEnd();
 							} catch(Exception e) {}
-							if((start >= 0 && start < objectSize) && (end > 0 && end <= objectSize)) {
+							if((start >= 0 && start < size) && (end > 0 && end <= size)) {
 								response.writeHeader("HTTP/1.1 206 Partial Content");
 								response.writeHeader("Accept-Ranges: bytes");
-								response.writeHeader("Content-Range: bytes " + start + "-" + (end) + "/" + objectSize);
+								response.writeHeader("Content-Range: bytes " + start + "-" + (end) + "/" + size);
 							} else {
 								response.writeHeader("HTTP/1.1 416 Requested Range Not Satisfiable");
 								response.writeHeader("Accept-Ranges: bytes");
@@ -432,10 +436,10 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 							}
 						} else {
 							response.writeHeader("HTTP/1.1 200 OK");
-							response.writeHeader("Content-Disposition: inline; filename=\"" + URLEncoder.encode(objectName, "UTF-8") + "\"");
+							response.writeHeader("Content-Disposition: inline; filename=\"" + URLEncoder.encode(name, "UTF-8") + "\"");
 						}
-						response.writeHeader("Content-Type: " + MimeTypes.get(getExtension(objectName).toLowerCase()));
-						response.writeHeader("Content-Length: " + ((end - start) + 1));
+						response.writeHeader("Content-Type: " + MimeTypes.get(getExtension(name).toLowerCase()));
+						response.writeHeader("Content-Length: " + size);
 						response.writeHeader("Cache-Control: no-store");
 						response.writeHeader("Connection: Keep-Alive");
 						response.writeHeader("Keep-Alive: timeout=5, max=97");
@@ -445,7 +449,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 						byte[] b = new byte[buffer];
 						for(long p = start; p < end; p += buffer) {
 							int toRead = (int)Math.min(buffer, (end - p) + 1);
-							read(object, b, p, toRead);
+							read(fileid, b, p, toRead);
 							response.writeByte(b, 0, toRead); 
 							response.flush();
 						}
