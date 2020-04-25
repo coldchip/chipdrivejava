@@ -29,13 +29,13 @@ public class Server {
 		
 		server.on("/api/v1/version", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {
-				drive.version(request, response);
+				drive.enqueue(ChipDrive.VERSION, request, response);
 			}
 		});
 
 		server.on("/api/v1/getDriveConfig", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {
-				drive.config(request, response);
+				drive.enqueue(ChipDrive.CONFIG, request, response);
 			}
 		});
 
@@ -46,42 +46,42 @@ public class Server {
 				switch(mode) {
 					case "files.list":
 						{
-							drive.list(request, response);
+							drive.enqueue(ChipDrive.LIST, request, response);
 						}
 					break;
 					case "file.link":
 						{
-							drive.link(request, response);
+							drive.enqueue(ChipDrive.LINK, request, response);
 						}
 					break;
 					case "new.upload":
 						{
-							drive.upload(request, response);
+							drive.enqueue(ChipDrive.UPLOAD, request, response);
 		        		}
 					break;
 					case "file.delete":
 						{
-							drive.delete(request, response);
+							drive.enqueue(ChipDrive.DELETE, request, response);
 						}
 					break;
 					case "new.folder":
 						{
-							drive.folder(request, response);
+							drive.enqueue(ChipDrive.FOLDER, request, response);
 						}
 					break;
 					case "item.rename":
 						{
-							drive.rename(request, response);
+							drive.enqueue(ChipDrive.RENAME, request, response);
 						}
 					break;
 					case "item.info":
 						{
-							drive.info(request, response);
+							drive.enqueue(ChipDrive.INFO, request, response);
 						}
 					break;
 					case "drive.quota":
 						{
-							drive.quota(request, response);
+							drive.enqueue(ChipDrive.QUOTA, request, response);
 						}
 					break;
 					default:
@@ -99,7 +99,7 @@ public class Server {
 		server.on("/api/v1/drive/item.stream/{object}", new HTTPRoute() {
 			@Override
 			public void handle(Request request, Response response) throws IOException {
-				drive.stream(request, response);
+				drive.enqueue(ChipDrive.STREAM, request, response);
 			}
 		});
 
