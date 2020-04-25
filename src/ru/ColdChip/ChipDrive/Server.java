@@ -1,12 +1,11 @@
 package ru.ColdChip.ChipDrive;
 
 import ru.ColdChip.WebServer.*;
-import ru.ColdChip.ChipDrive.Controllers.ChipDrive;
-import ru.ColdChip.ChipDrive.Controllers.IChipDrive;
+import ru.ColdChip.ChipDrive.Controllers.*;
 import java.io.IOException;
 import org.JSON.*;
 
-public class Server extends ChipDrive implements IChipDrive {
+public class Server {
 
 	private static final int PORT = 9010;
 
@@ -23,17 +22,20 @@ public class Server extends ChipDrive implements IChipDrive {
 	private void core() {
 		System.out.println("ColdChip Drive V2.3 Java");
 		System.out.println("--------------------------");
+
+		ChipDrive drive = new ChipDrive();
+
 		HTTPServer server = new HTTPServer(PORT);
 		
 		server.on("/api/v1/version", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {
-				version(request, response);
+				drive.version(request, response);
 			}
 		});
 
 		server.on("/api/v1/getDriveConfig", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {
-				driveConfig(request, response);
+				drive.config(request, response);
 			}
 		});
 
@@ -44,42 +46,42 @@ public class Server extends ChipDrive implements IChipDrive {
 				switch(mode) {
 					case "files.list":
 						{
-							fileList(request, response);
+							drive.list(request, response);
 						}
 					break;
 					case "file.link":
 						{
-							fileLink(request, response);
+							drive.link(request, response);
 						}
 					break;
 					case "new.upload":
 						{
-							fileUpload(request, response);
+							drive.upload(request, response);
 		        		}
 					break;
 					case "file.delete":
 						{
-							fileDelete(request, response);
+							drive.delete(request, response);
 						}
 					break;
 					case "new.folder":
 						{
-							newFolder(request, response);
+							drive.folder(request, response);
 						}
 					break;
 					case "item.rename":
 						{
-							fileRename(request, response);
+							drive.rename(request, response);
 						}
 					break;
 					case "item.info":
 						{
-							fileInfo(request, response);
+							drive.info(request, response);
 						}
 					break;
 					case "drive.quota":
 						{
-							driveQuota(request, response);
+							drive.quota(request, response);
 						}
 					break;
 					default:
@@ -87,7 +89,7 @@ public class Server extends ChipDrive implements IChipDrive {
 							JSONObject j = new JSONObject();
 							j.put("errorMsg", "UnknownModeException");
 							j.put("login", false);
-							sendError(response, j);
+							drive.sendError(response, j);
 						}
 					break;
 				}
@@ -97,7 +99,7 @@ public class Server extends ChipDrive implements IChipDrive {
 		server.on("/api/v1/drive/item.stream/{object}", new HTTPRoute() {
 			@Override
 			public void handle(Request request, Response response) throws IOException {
-				fileStream(request, response);
+				drive.stream(request, response);
 			}
 		});
 

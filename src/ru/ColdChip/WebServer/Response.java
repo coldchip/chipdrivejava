@@ -61,6 +61,22 @@ public class Response {
 		this.stream.write(data.getBytes(), 0, data.length());
 		this.stream.flush();
 	}
+	public void writeText(byte[] data) throws IOException {
+
+		writeHeader("HTTP/1.1 " + getStatus() + " OK");
+		writeHeader("Content-Type: " + getContentType());
+		writeHeader("Content-Length: " + data.length);
+		writeHeader("Cache-Control: no-store");
+		writeHeader("Connection: Keep-Alive");
+		writeHeader("Keep-Alive: timeout=5, max=97");
+		writeHeader("Server: ColdChip Web Servlet/CWS 1.2");
+		writeHeader("");
+		if(this.setSession == true) {
+			writeHeader("Set-Cookie: session=" + this.sessionKey + "; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT\r\n");
+		}
+		this.stream.write(data, 0, data.length);
+		this.stream.flush();
+	}
 	public void redirect(String loc) throws IOException {
 		writeHeader("HTTP/1.1 302 Found");
 		writeHeader("Content-Type: " + getContentType());

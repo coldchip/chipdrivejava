@@ -5,14 +5,14 @@ import java.io.IOException;
 
 public interface IChipDrive {
 	public void version(Request request, Response response) throws IOException;
-	public void driveConfig(Request request, Response response) throws IOException;
-	public void fileList(Request request, Response response) throws IOException;
-	public void fileLink(Request request, Response response) throws IOException;
-	public void fileUpload(Request request, Response response) throws IOException;
-	public void fileDelete(Request request, Response response) throws IOException;
-	public void newFolder(Request request, Response response) throws IOException;
-	public void fileRename(Request request, Response response) throws IOException;
-	public void fileInfo(Request request, Response response) throws IOException;
-	public void driveQuota(Request request, Response response) throws IOException;
-	public void fileStream(Request request, Response response) throws IOException;
+	public void config(Request request, Response response) throws IOException;
+	public void list(Request request, Response response) throws IOException;
+	public void link(Request request, Response response) throws IOException;
+	public void upload(Request request, Response response) throws IOException;
+	public void delete(Request request, Response response) throws IOException;
+	public void folder(Request request, Response response) throws IOException;
+	public void rename(Request request, Response response) throws IOException;
+	public void info(Request request, Response response) throws IOException;
+	public void quota(Request request, Response response) throws IOException;
+	public void stream(Request request, Response response) throws IOException;
 }

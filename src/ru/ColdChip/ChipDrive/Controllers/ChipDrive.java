@@ -12,7 +12,7 @@ import java.util.*;
 import java.net.URLEncoder;
 import org.JSON.*;
 
-public abstract class ChipDrive extends ChipFS implements IChipDrive {
+public class ChipDrive extends ChipFS implements IChipDrive {
 
 	public ChipDrive() {
 
@@ -25,7 +25,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 		response.writeText(config.toString(4));
 	}
 
-	public void driveConfig(Request request, Response response) throws IOException {
+	public void config(Request request, Response response) throws IOException {
 		JSONObject methods = new JSONObject();
 		methods.put("config", "config");
 		methods.put("list", "files.list");
@@ -46,7 +46,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 		response.writeText(config.toString(4));
 	}
 
-	public void fileList(Request request, Response response) throws IOException {
+	public void list(Request request, Response response) throws IOException {
 		try {
 			if(isAuthed() == true) {
 				String props = request.getValue("props");
@@ -65,7 +65,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 				if(node instanceof FolderObject) {
 					FolderObject folder = (FolderObject)node;
 					ArrayList<String> files = folder.list();
-
+					
 					JSONArray list = new JSONArray();
 
 					for(String fileID : files) {
@@ -108,7 +108,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	public void fileLink(Request request, Response response) throws IOException {
+	public void link(Request request, Response response) throws IOException {
 		try {
 			if(isAuthed() == true) {
 					String props = request.getValue("props");
@@ -150,7 +150,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	public void fileUpload(Request request, Response response) throws IOException {
+	public void upload(Request request, Response response) throws IOException {
 		try {
 			if(isAuthed() == true) {
 				String props = request.getValue("props");
@@ -233,7 +233,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	public void fileDelete(Request request, Response response) throws IOException {
+	public void delete(Request request, Response response) throws IOException {
 		try {
 			if(isAuthed() == true) {
 				String props = request.getValue("props");
@@ -264,7 +264,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	public void newFolder(Request request, Response response) throws IOException {
+	public void folder(Request request, Response response) throws IOException {
 		try {
 			if(isAuthed() == true) {
 				String props = request.getValue("props");
@@ -306,7 +306,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	public void fileRename(Request request, Response response) throws IOException {
+	public void rename(Request request, Response response) throws IOException {
 		try {
 			if(isAuthed() == true) {
 				String props = request.getValue("props");
@@ -339,7 +339,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	public void fileInfo(Request request, Response response) throws IOException {
+	public void info(Request request, Response response) throws IOException {
 		try {
 			if(isAuthed() == true) {
 				String props = request.getValue("props");
@@ -373,7 +373,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	public void driveQuota(Request request, Response response) throws IOException {
+	public void quota(Request request, Response response) throws IOException {
 		try {
 			if(isAuthed() == true) {
 
@@ -406,7 +406,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	public void fileStream(Request request, Response response) throws IOException {
+	public void stream(Request request, Response response) throws IOException {
 		try {
 			if(isAuthed() == true) {
 
