@@ -1,4 +1,4 @@
-package ru.ColdChip.ChipDrive.Controllers;
+package ru.ColdChip.ChipDrive.Object;
 
 import org.JSON.*;
 import ru.ColdChip.ChipDrive.Exceptions.*;
@@ -12,7 +12,6 @@ public class NodeRoot {
 	}
 
 	public Node get(String id) throws ChipDriveException {
-		System.out.println(this.list.toString(4));
 		if(id.equals("")) {
 			id = "home";
 		}

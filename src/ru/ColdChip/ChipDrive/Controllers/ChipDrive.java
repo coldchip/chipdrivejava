@@ -5,6 +5,7 @@ import ru.ColdChip.WebServer.*;
 import ru.ColdChip.ChipDrive.api.ChipFS;
 
 import ru.ColdChip.ChipDrive.Exceptions.*;
+import ru.ColdChip.ChipDrive.Object.*;
 import ru.ColdChip.ChipDrive.Constants.MimeTypes;
 import java.io.*;
 import java.util.*;
@@ -428,7 +429,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 							if((start >= 0 && start < size) && (end > 0 && end <= size)) {
 								response.writeHeader("HTTP/1.1 206 Partial Content");
 								response.writeHeader("Accept-Ranges: bytes");
-								response.writeHeader("Content-Range: bytes " + start + "-" + (end) + "/" + size);
+								response.writeHeader("Content-Range: bytes " + (start) + "-" + (end) + "/" + size);
 							} else {
 								response.writeHeader("HTTP/1.1 416 Requested Range Not Satisfiable");
 								response.writeHeader("Accept-Ranges: bytes");
@@ -439,7 +440,7 @@ public abstract class ChipDrive extends ChipFS implements IChipDrive {
 							response.writeHeader("Content-Disposition: inline; filename=\"" + URLEncoder.encode(name, "UTF-8") + "\"");
 						}
 						response.writeHeader("Content-Type: " + MimeTypes.get(getExtension(name).toLowerCase()));
-						response.writeHeader("Content-Length: " + size);
+						response.writeHeader("Content-Length: " + ((end - start) + 1));
 						response.writeHeader("Cache-Control: no-store");
 						response.writeHeader("Connection: Keep-Alive");
 						response.writeHeader("Keep-Alive: timeout=5, max=97");

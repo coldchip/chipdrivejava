@@ -1,4 +1,4 @@
-package ru.ColdChip.ChipDrive.Controllers;
+package ru.ColdChip.ChipDrive.Object;
 
 import java.util.Iterator;
 import ru.ColdChip.ChipDrive.Exceptions.ChipDriveException;

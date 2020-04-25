@@ -201,6 +201,7 @@ public class MimeTypes {
                 reversePut("application/x-xcf", "xcf");
                 reversePut("application/x-xfig", "fig");
                 reversePut("application/xhtml+xml", "xhtml");
+                reversePut("text/javascript", "js");
                 reversePut("audio/3gpp", "3gpp");
                 reversePut("audio/amr", "amr");
                 reversePut("audio/basic", "snd");

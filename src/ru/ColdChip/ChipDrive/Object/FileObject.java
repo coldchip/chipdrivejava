@@ -1,4 +1,4 @@
-package ru.ColdChip.ChipDrive.Controllers;
+package ru.ColdChip.ChipDrive.Object;
 
 import org.JSON.JSONObject;
 

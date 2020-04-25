@@ -8,6 +8,7 @@ package ru.ColdChip.WebServer;
 import java.io.*;
 import java.nio.file.*;
 import java.net.*;
+import ru.ColdChip.ChipDrive.Constants.MimeTypes;
 
 public class Response {
 	public OutputStream stream;
@@ -87,14 +88,6 @@ public class Response {
 	public String getContentType() {
 		return this.contentType;
 	}
-	public String getMimeType(File file) throws IOException {
-		String mimeType = Files.probeContentType(file.toPath());
-		if(mimeType == null) {
-			return "application/octet-stream";
-		} else {
-			return mimeType;
-		}
-	}
 
 	public void serve(String root) throws IOException {
 		try {
@@ -121,6 +114,14 @@ public class Response {
 		return result.toString().replaceAll("^/*", "").replaceAll("/*$", "").replaceAll("\\\\", "/");
 	}
 
+	private static String getExtension(String name) {
+		int lastIndexOf = name.lastIndexOf(".");
+		if (lastIndexOf == -1) {
+		    return ""; // empty extension
+		}
+		return name.substring(lastIndexOf + 1);
+	}
+
 	public void writeFile(String fileName) throws IOException, FileNotFoundException {
 		File file = new File(fileName);
 		RandomAccessFile handler = new RandomAccessFile(file, "r");
@@ -145,7 +146,7 @@ public class Response {
 			writeHeader("HTTP/1.1 200 OK");
 			writeHeader("Content-Disposition: inline; filename=\"" + new File(fileName).getName() + "\"");
 		}
-		writeHeader("Content-Type: " + getMimeType(file));
+		writeHeader("Content-Type: " + MimeTypes.get(getExtension(new File(fileName).getName()).toLowerCase()));
 		writeHeader("Content-Length: " + ((end - start) + 1));
 		writeHeader("Cache-Control: no-store");
 		writeHeader("Connection: Keep-Alive");
@@ -158,7 +159,7 @@ public class Response {
 		for(long p = start; p < end; p += buffer) {
 			int toRead = (int)Math.min(buffer, (end - p) + 1);
 			handler.read(b, 0, toRead);
-			writeByte(b);
+			writeByte(b, 0, toRead);
 			flush();
 		}
 		handler.close();
