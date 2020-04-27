@@ -8,15 +8,16 @@ package ru.ColdChip.WebServer;
 import java.io.*;
 import java.nio.file.*;
 import java.net.*;
+import java.util.*;
 import ru.ColdChip.ChipDrive.Constants.MimeTypes;
 
 public class Response {
-	public OutputStream stream;
+	private OutputStream stream;
 	private int status = 200;
-	private boolean setSession = false;
-	private String sessionKey = "";
 	private String contentType = "text/html";
 	public Request req;
+	private boolean isHeaderSent = false;
+	private HashMap<String, String> headers = new HashMap<String, String>();
 
 	public Response(OutputStream stream) {
 		this.stream = stream;
@@ -24,73 +25,98 @@ public class Response {
 	public Request getRequest() {
 		return this.req;
 	}
-	public void writeHeader(String data) throws IOException {
-		data += "\r\n";
-		this.stream.write(data.getBytes(), 0, data.length());
+	public void setHeader(String key, String val) {
+		key = key.toLowerCase();
+		this.headers.put(key, val);
+	}
+	public String buildHeader() {
+		String output = "";
+		switch(this.status) {
+			case 200:{
+				output += "HTTP/1.1 200 OK\r\n";
+			}
+			break;
+			case 404:{
+				output += "HTTP/1.1 404 Not Found\r\n";
+			}
+			break;
+			case 206:{
+				output += "HTTP/1.1 206 Partial Content\r\n";
+			}
+			break;
+			case 416:{
+				output += "HTTP/1.1 416 Range Not Satisfiable\r\n";
+			}
+			break;
+			default: {
+				output += "HTTP/1.1 501 Not Implemented\r\n";
+			}
+			break;
+		}
+		for(Map.Entry<String, String> entry : this.headers.entrySet()) {
+			output += (entry.getKey() + ": " + entry.getValue() + "\r\n");
+		}
+		output += "\r\n";
+		return output;
 	}
 	public void writeByte(byte[] data) throws IOException {
+		if(this.isHeaderSent == false) {
+			String header = buildHeader();
+			this.stream.write(header.getBytes(), 0, header.length());
+			this.isHeaderSent = true;
+		}
 		this.stream.write(data, 0, data.length);
 	}
 	public void writeByte(byte[] data, int offset, int length) throws IOException {
+		if(this.isHeaderSent == false) {
+			String header = buildHeader();
+			this.stream.write(header.getBytes(), 0, header.length());
+			this.isHeaderSent = true;
+		}
 		this.stream.write(data, offset, length);
-	}
-	public void setSession(String data) {
-		this.sessionKey = data;
-		this.setSession = true;
-	}
-	public void destroySession() {
-		this.sessionKey = "null";
-		this.setSession = true;
 	}
 	public void flush() throws IOException {
 		this.stream.flush();
 	}
 	public void writeText(String data) throws IOException {
 
-		writeHeader("HTTP/1.1 " + getStatus() + " OK");
-		writeHeader("Content-Type: " + getContentType());
-		writeHeader("Content-Length: " + data.length());
-		writeHeader("Cache-Control: no-store");
-		writeHeader("Connection: Keep-Alive");
-		writeHeader("Keep-Alive: timeout=5, max=97");
-		writeHeader("Server: ColdChip Web Servlet/CWS 1.2");
-		writeHeader("");
-		if(this.setSession == true) {
-			writeHeader("Set-Cookie: session=" + this.sessionKey + "; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT\r\n");
-		}
-		this.stream.write(data.getBytes(), 0, data.length());
+		setStatus(getStatus());
+		setHeader("Content-Type", getContentType());
+		setHeader("Content-Length", Integer.toString(data.length()));
+		setHeader("Cache-Control", "no-store");
+		setHeader("Connection", "Keep-Alive");
+		setHeader("Keep-Alive", "timeout=5, max=97");
+		setHeader("Server", "ColdChip Web Servlet/CWS 1.2");
+		writeByte(data.getBytes(), 0, data.length());
 		this.stream.flush();
 	}
 	public void writeText(byte[] data) throws IOException {
 
-		writeHeader("HTTP/1.1 " + getStatus() + " OK");
-		writeHeader("Content-Type: " + getContentType());
-		writeHeader("Content-Length: " + data.length);
-		writeHeader("Cache-Control: no-store");
-		writeHeader("Connection: Keep-Alive");
-		writeHeader("Keep-Alive: timeout=5, max=97");
-		writeHeader("Server: ColdChip Web Servlet/CWS 1.2");
-		writeHeader("");
-		if(this.setSession == true) {
-			writeHeader("Set-Cookie: session=" + this.sessionKey + "; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT\r\n");
-		}
-		this.stream.write(data, 0, data.length);
+		setStatus(getStatus());
+		setHeader("Content-Type", getContentType());
+		setHeader("Content-Length", Integer.toString(data.length));
+		setHeader("Cache-Control", "no-store");
+		setHeader("Connection", "Keep-Alive");
+		setHeader("Keep-Alive", "timeout=5, max=97");
+		setHeader("Server", "ColdChip Web Servlet/CWS 1.2");
+		writeByte(data, 0, data.length);
 		this.stream.flush();
 	}
 	public void redirect(String loc) throws IOException {
-		writeHeader("HTTP/1.1 302 Found");
-		writeHeader("Content-Type: " + getContentType());
-		writeHeader("Content-Length: 0");
-		writeHeader("Cache-Control: no-store");
-		writeHeader("Connection: Keep-Alive");
-		writeHeader("Keep-Alive: timeout=5, max=97");
-		writeHeader("Location: " + loc);
-		writeHeader("Server: ColdChip Web Servlet/CWS 1.2");
-		writeHeader("");
-		if(this.setSession == true) {
-			writeHeader("Set-Cookie: session=" + this.sessionKey + "; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT\r\n");
+		setStatus(302);
+		setHeader("Content-Type", getContentType());
+		setHeader("Content-Length", "0");
+		setHeader("Cache-Control", "no-store");
+		setHeader("Connection", "Keep-Alive");
+		setHeader("Keep-Alive", "timeout=5, max=97");
+		setHeader("Location", loc);
+		setHeader("Server", "ColdChip Web Servlet/CWS 1.2");
+		if(this.isHeaderSent == false) {
+			String header = buildHeader();
+			this.stream.write(header.getBytes(), 0, header.length());
+			this.stream.flush();
+			this.isHeaderSent = true;
 		}
-		this.stream.flush();
 	}
 	public void setStatus(int code) {
 		this.status = code;
@@ -144,31 +170,32 @@ public class Response {
 		long objectSize = file.length();
 		long start = 0;
 		long end = objectSize - 1;
-		if(getRequest().hasHeader("range")) {
-			try {
+		if(getRequest().hasRangeStart() || getRequest().hasRangeEnd()) {
+			if(getRequest().hasRangeStart()) {
 				start = getRequest().getRangeStart();
+			}
+			if(getRequest().hasRangeEnd()) {
 				end = getRequest().getRangeEnd();
-			} catch(Exception e) {}
+			}
 			if((start >= 0 && start < objectSize) && (end > 0 && end <= objectSize)) {
-				writeHeader("HTTP/1.1 206 Partial Content");
-				writeHeader("Accept-Ranges: bytes");
-				writeHeader("Content-Range: bytes " + start + "-" + (end) + "/" + objectSize);
+				setStatus(206);
+				setHeader("Accept-Ranges", "bytes");
+				setHeader("Content-Range", "bytes " + (start) + "-" + (end) + "/" + objectSize);
 			} else {
-				writeHeader("HTTP/1.1 416 Requested Range Not Satisfiable");
-				writeHeader("Accept-Ranges: bytes");
+				setStatus(416);
+				setHeader("Accept-Ranges", "bytes");
 				return;
 			}
 		} else {
-			writeHeader("HTTP/1.1 200 OK");
-			writeHeader("Content-Disposition: inline; filename=\"" + new File(fileName).getName() + "\"");
+			setStatus(200);
+			setHeader("Content-Disposition", "inline; filename=\"" + new File(fileName).getName() + "\"");
 		}
-		writeHeader("Content-Type: " + MimeTypes.get(getExtension(new File(fileName).getName()).toLowerCase()));
-		writeHeader("Content-Length: " + ((end - start) + 1));
-		writeHeader("Cache-Control: no-store");
-		writeHeader("Connection: Keep-Alive");
-		writeHeader("Keep-Alive: timeout=5, max=97");
-		writeHeader("Server: ColdChip Web Servlet/CWS 1.2");
-		writeHeader("");
+		setHeader("Content-Type", MimeTypes.get(getExtension(new File(fileName).getName()).toLowerCase()));
+		setHeader("Content-Length", Long.toString(((end - start) + 1)));
+		setHeader("Cache-Control", "no-store");
+		setHeader("Connection", "Keep-Alive");
+		setHeader("Keep-Alive", "timeout=5, max=97");
+		setHeader("Server", " ColdChip Web Servlet/CWS 1.2");
 		int buffer = 1048576 * 10;
 		byte[] b = new byte[buffer];
 		handler.seek(start);

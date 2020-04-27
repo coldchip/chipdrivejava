@@ -27,11 +27,35 @@ public class Request {
 	public String getPath() {
 		return this.header.getPath();
 	}
-	public long getRangeStart() throws Exception {
-		return Long.parseLong(getHeader("range").split("=")[1].split("-")[0].replaceAll("[^0-9]", ""));
+	public boolean hasRangeStart() {
+		try {
+			Long.parseLong(getHeader("range").split("=")[1].split("-")[0].replaceAll("[^0-9]", ""));
+		} catch(Exception e) {
+			return false;
+		}
+		return true;
 	}
-	public long getRangeEnd() throws Exception {
-		return Long.parseLong(getHeader("range").split("=")[1].split("-")[1].replaceAll("[^0-9]", ""));
+	public boolean hasRangeEnd() {
+		try {
+			Long.parseLong(getHeader("range").split("=")[1].split("-")[1].replaceAll("[^0-9]", ""));
+		} catch(Exception e) {
+			return false;
+		}
+		return true;
+	}
+	public long getRangeStart() {
+		if(this.hasRangeStart()) {
+			return Long.parseLong(getHeader("range").split("=")[1].split("-")[0].replaceAll("[^0-9]", ""));
+		} else {
+			return 0;
+		}
+	}
+	public long getRangeEnd() {
+		if(this.hasRangeEnd()) {
+			return Long.parseLong(getHeader("range").split("=")[1].split("-")[1].replaceAll("[^0-9]", ""));
+		} else {
+			return 0;
+		}
 	}
 	public void setArgs(LinkedHashMap<String, String> val) {
 		this.args = val;
