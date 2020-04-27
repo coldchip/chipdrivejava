@@ -1,9 +1,7 @@
 package ru.ColdChip.ChipDrive.Controllers;
 
 import ru.ColdChip.WebServer.*;
-
 import ru.ColdChip.ChipDrive.api.ChipFS;
-
 import ru.ColdChip.ChipDrive.Exceptions.*;
 import ru.ColdChip.ChipDrive.Object.*;
 import ru.ColdChip.ChipDrive.Constants.MimeTypes;
@@ -13,11 +11,23 @@ import java.net.URLEncoder;
 import org.JSON.*;
 
 class DriveRequest {
-
+	private Request request;
+	public void setRequest(Request request) {
+		this.request = request;
+	}
+	public Request getRequest() {
+		return this.request;
+	}
 }
 
 class DriveResponse {
-	
+	private Response response;
+	public void setResponse(Response response) {
+		this.response = response;
+	}
+	public Response getResponse() {
+		return this.response;
+	}
 }
 
 public class ChipDrive extends ChipFS implements IChipDrive {
@@ -45,7 +55,11 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		try {
 			threads++;
 			if(threads < 255) {
-				this.dispatch(method, request, response);
+				DriveRequest driveRequest = new DriveRequest();
+				driveRequest.setRequest(request);
+				DriveResponse driveResponse = new DriveResponse();
+				driveResponse.setResponse(response);
+				this.dispatch(method, driveRequest, driveResponse);
 			} else {
 				JSONObject error = new JSONObject();
 				error.put("errorMsg", "Server is overloaded");
@@ -57,7 +71,9 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	private void dispatch(int method, Request request, Response response) throws IOException {
+	private void dispatch(int method, DriveRequest driveRequest, DriveResponse driveResponse) throws IOException {
+		Request request = driveRequest.getRequest();
+		Response response = driveResponse.getResponse();
 		try {
 			switch(method) {
 				case ChipDrive.VERSION: {
