@@ -21,8 +21,8 @@ public class Request {
 	public String getHeader(String key) {
 		return this.header.getHeader(key);
 	}
-	public boolean containsHeader(String key) {
-		return this.header.containsHeader(key);
+	public boolean hasHeader(String key) {
+		return this.header.hasHeader(key);
 	}
 	public String getPath() {
 		return this.header.getPath();

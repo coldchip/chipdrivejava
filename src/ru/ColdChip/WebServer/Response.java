@@ -144,7 +144,7 @@ public class Response {
 		long objectSize = file.length();
 		long start = 0;
 		long end = objectSize - 1;
-		if(getRequest().containsHeader("range")) {
+		if(getRequest().hasHeader("range")) {
 			try {
 				start = getRequest().getRangeStart();
 				end = getRequest().getRangeEnd();

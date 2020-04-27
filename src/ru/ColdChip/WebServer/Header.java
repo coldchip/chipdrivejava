@@ -39,7 +39,7 @@ public class Header {
 		return this.version;
 	}
 
-	public boolean containsHeader(String key) {
+	public boolean hasHeader(String key) {
 		return headers.containsKey(key);
 	}
 

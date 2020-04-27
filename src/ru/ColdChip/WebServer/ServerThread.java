@@ -39,7 +39,7 @@ public class ServerThread implements Runnable {
 			while(true) {
 				Header header = readHeader(input);
 				if(header.getMethod().equals("POST")) {
-					if(header.containsHeader("content-length") && header.containsHeader("content-type")) {
+					if(header.hasHeader("content-length") && header.hasHeader("content-type")) {
 						String contentLength = header.getHeader("content-length");
 						String contentType = header.getHeader("content-type");
 						if(contentType.equals("application/x-www-form-urlencoded")) {

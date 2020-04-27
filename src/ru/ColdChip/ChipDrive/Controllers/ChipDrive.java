@@ -12,21 +12,78 @@ import org.JSON.*;
 
 class DriveRequest {
 	private Request request;
-	public void setRequest(Request request) {
+	private String folderid = null;
+	private String fileid = null;
+	private String name = null;
+	private long size = 0l;
+	public DriveRequest(Request request) {
 		this.request = request;
+		if(request.hasHeader("content-length")) {
+			this.size = Long.parseLong(request.getHeader("content-length").replaceAll("[^0-9]", ""));
+		}
+		try {
+			JSONObject props = new JSONObject(request.getValue("props"));
+			try {
+				this.folderid = props.getString("folderid");
+			} catch(JSONException e) {}
+			try {
+				this.fileid = props.getString("fileid");
+			} catch(JSONException e) {}
+			try {
+				this.name = props.getString("name");
+			} catch(JSONException e) {}
+		} catch(JSONException e) {
+
+		}
 	}
+	
 	public Request getRequest() {
 		return this.request;
+	}
+	public int read(byte[] buf, int offset, int length) throws IOException{
+		return this.getRequest().stream.read(buf, offset, length);
+	}
+	public long getSize() {
+		return this.size;
+	}
+	public boolean hasFolderID() {
+		return this.folderid != null;
+	}
+	public String getFolderID() {
+		return this.folderid;
+	}
+	public boolean hasFileID() {
+		return this.fileid != null;
+	}
+	public String getFileID() {
+		return this.fileid;
+	}
+	public boolean hasName() {
+		return this.name != null;
+	}
+	public String getName() {
+		return this.name;
 	}
 }
 
 class DriveResponse {
 	private Response response;
-	public void setResponse(Response response) {
+	private String contentType = "application/octet-stream";
+	public DriveResponse(Response response) {
 		this.response = response;
 	}
 	public Response getResponse() {
 		return this.response;
+	}
+	public void setContentType(String contentType) {
+		this.contentType = contentType;
+	}
+	public String getContentType() {
+		return this.contentType;
+	}
+	public void write(String text) throws IOException {
+		this.getResponse().setContentType(this.getContentType());
+		this.getResponse().writeText(text);
 	}
 }
 
@@ -55,11 +112,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		try {
 			threads++;
 			if(threads < 255) {
-				DriveRequest driveRequest = new DriveRequest();
-				driveRequest.setRequest(request);
-				DriveResponse driveResponse = new DriveResponse();
-				driveResponse.setResponse(response);
-				this.dispatch(method, driveRequest, driveResponse);
+				this.dispatch(method, new DriveRequest(request), new DriveResponse(response));
 			} else {
 				JSONObject error = new JSONObject();
 				error.put("errorMsg", "Server is overloaded");
@@ -77,16 +130,16 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		try {
 			switch(method) {
 				case ChipDrive.VERSION: {
-					this.version(request, response);
+					this.version(driveRequest, driveResponse);
 				}
 				break;
 				case ChipDrive.CONFIG: {
-					this.config(request, response);
+					this.config(driveRequest, driveResponse);
 				}
 				break;
 				case ChipDrive.LIST: {
 					if(isAuthed() == true) {
-						this.list(request, response);
+						this.list(driveRequest, driveResponse);
 					} else {
 						throw new ChipDriveLoginException("Login Required");
 					}
@@ -94,7 +147,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 				break;
 				case ChipDrive.LINK: {
 					if(isAuthed() == true) {
-						this.link(request, response);
+						this.link(driveRequest, driveResponse);
 					} else {
 						throw new ChipDriveLoginException("Login Required");
 					}
@@ -102,7 +155,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 				break;
 				case ChipDrive.UPLOAD: {
 					if(isAuthed() == true) {
-						this.upload(request, response);
+						this.upload(driveRequest, driveResponse);
 					} else {
 						throw new ChipDriveLoginException("Login Required");
 					}
@@ -178,14 +231,14 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	private void version(Request request, Response response) throws IOException, ChipDriveException, JSONException {
+	private void version(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException, JSONException {
 		JSONObject config = new JSONObject();
 		config.put("version", "1.3.1");
 		response.setContentType("application/json");
-		response.writeText(config.toString(4));
+		response.write(config.toString(4));
 	}
 
-	private void config(Request request, Response response) throws IOException, ChipDriveException, JSONException {
+	private void config(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException, JSONException {
 		JSONObject methods = new JSONObject();
 		methods.put("config", "config");
 		methods.put("list", "files.list");
@@ -203,115 +256,120 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		config.put("gateway", "/api/v1/drive/{method}");
 		config.put("methods", methods);
 		response.setContentType("application/json");
-		response.writeText(config.toString(4));
+		response.write(config.toString(4));
 	}
 
-	private void list(Request request, Response response) throws IOException, ChipDriveException, JSONException {
-		String props = request.getValue("props");
-		JSONObject propsJSON = new JSONObject(props);
-		String folderid = propsJSON.getString("folderid");
-
-		NodeRoot root = new NodeRoot();
-		if(folderid.equals("") && !root.has(folderid)) {
-			FolderObject folder = new FolderObject();
-			folder.setName("home");
-			folder.setID("home");
-			root.put(folder);
-		}
-
-		Node node = root.get(folderid);
-		if(node instanceof FolderObject) {
-			FolderObject folder = (FolderObject)node;
-			ArrayList<String> files = folder.list();
-
-			JSONArray list = new JSONArray();
-
-			for(String fileID : files) {
-				JSONObject objectData = new JSONObject();
-				Node currentNode = root.get(fileID);
-				if(currentNode instanceof FolderObject) {
-					objectData.put("kind", 0);
-				} else {
-					objectData.put("kind", 1);
-				}
-				objectData.put("displayName", currentNode.getName());
-				objectData.put("id", fileID);
-				list.put(objectData);
-			}
-
-			JSONObject meta = new JSONObject();
-			meta.put("list", list);
-			meta.put("displayName", node.getName());
-
-			sendMessage(response, meta);
-		} else {
-			throw new ChipDriveException("Not a folder");
-		}
-	}
-
-	private void link(Request request, Response response) throws IOException, ChipDriveException, JSONException {
-		String props = request.getValue("props");
-		JSONObject propsJSON = new JSONObject(props);
-		String fileid = propsJSON.getString("fileid");
-
-		NodeRoot root = new NodeRoot();
-		Node node = root.get(fileid);
-		if(node instanceof FileObject) {
-			FileObject folder = (FileObject)node;
-			String filename = folder.getName();
-			JSONObject data = new JSONObject();
-			data.put("type", MimeTypes.get(getExtension(filename).toLowerCase()));
-			data.put("ext", getExtension(filename).toLowerCase());
-			data.put("displayName", filename);
-			data.put("url", "/api/v1/drive/item.stream/" + fileid);
-
-			sendMessage(response, data);
-		} else {
-			throw new ChipDriveException("Not a folder");
-		}
-	}
-
-	private void upload(Request request, Response response) throws IOException, ChipDriveException, JSONException {
-		String props = request.getValue("props");
-		JSONObject propsJSON = new JSONObject(props);
-		String folderid = propsJSON.getString("folderid");
-		String name = propsJSON.getString("name");
-
-		try {
-			String randomID = randomString(32);
+	private void list(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException, JSONException {
+		if(request.hasFolderID()) {
+			String folderid = request.getFolderID();
 
 			NodeRoot root = new NodeRoot();
+			if(folderid.equals("") && !root.has(folderid)) {
+				FolderObject folder = new FolderObject();
+				folder.setName("home");
+				folder.setID("home");
+				root.put(folder);
+			}
 
-			FileObject file = new FileObject();
-			file.setName(name);
-			file.setID(randomID);
-			file.setParentID(folderid);
-			file.put(file);
+			Node node = root.get(folderid);
+			if(node instanceof FolderObject) {
+				FolderObject folder = (FolderObject)node;
+				ArrayList<String> files = folder.list();
 
-			FolderObject rootDir = (FolderObject)root.get(folderid);
-			rootDir.addChild(file);
-			root.put(rootDir);
+				JSONArray list = new JSONArray();
 
-			long contentSize = Long.parseLong(request.getHeader("content-length").replaceAll("[^0-9]", ""));
-			if(contentSize > 0) {
-				long i = 0;
-				byte[] data = new byte[8192];
-				while (i < contentSize) {
-					int read = request.stream.read(data, 0, data.length);
-					if(read > 0) {
-						write(randomID, data, i, read);
-						i += read;
+				for(String fileID : files) {
+					JSONObject objectData = new JSONObject();
+					Node currentNode = root.get(fileID);
+					if(currentNode instanceof FolderObject) {
+						objectData.put("kind", 0);
 					} else {
-						throw new IOException("");
+						objectData.put("kind", 1);
 					}
+					objectData.put("displayName", currentNode.getName());
+					objectData.put("id", fileID);
+					list.put(objectData);
 				}
-			}	
-		} catch(IOException e) {
-			throw new ChipDriveException("I/O Error");
-		} catch (Exception e) {
-			throw new ChipDriveException("Upload Failed");
+
+				JSONObject meta = new JSONObject();
+				meta.put("list", list);
+				meta.put("displayName", node.getName());
+
+				sendMessage(response, meta);
+			} else {
+				throw new ChipDriveException("Not a folder");
+			}
+		} else {
+			throw new ChipDriveException("Params not Satisfiable");
 		}
-		sendMessage(response, new JSONObject());
+	}
+
+	private void link(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException, JSONException {
+		if(request.hasFileID()) {
+			String fileid = request.getFileID();
+
+			NodeRoot root = new NodeRoot();
+			Node node = root.get(fileid);
+			if(node instanceof FileObject) {
+				FileObject folder = (FileObject)node;
+				String filename = folder.getName();
+				JSONObject data = new JSONObject();
+				data.put("type", MimeTypes.get(getExtension(filename).toLowerCase()));
+				data.put("ext", getExtension(filename).toLowerCase());
+				data.put("displayName", filename);
+				data.put("url", "/api/v1/drive/item.stream/" + fileid);
+
+				sendMessage(response, data);
+			} else {
+				throw new ChipDriveException("Not a folder");
+			}
+		} else {
+			throw new ChipDriveException("Params not Satisfiable");
+		}
+	}
+
+	private void upload(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException, JSONException {
+		if(request.hasFolderID() && request.hasName()) {
+			String folderid = request.getFolderID();
+			String name = request.getName();
+			try {
+				String randomID = randomString(32);
+
+				NodeRoot root = new NodeRoot();
+
+				FileObject file = new FileObject();
+				file.setName(name);
+				file.setID(randomID);
+				file.setParentID(folderid);
+				file.put(file);
+
+				FolderObject rootDir = (FolderObject)root.get(folderid);
+				rootDir.addChild(file);
+				root.put(rootDir);
+
+				long contentSize = request.getSize();
+				if(contentSize > 0) {
+					long i = 0;
+					byte[] data = new byte[8192];
+					while (i < contentSize) {
+						int read = request.read(data, 0, data.length);
+						if(read > 0) {
+							write(randomID, data, i, read);
+							i += read;
+						} else {
+							throw new IOException("");
+						}
+					}
+				}	
+			} catch(IOException e) {
+				throw new ChipDriveException("I/O Error");
+			} catch (Exception e) {
+				throw new ChipDriveException("Upload Failed");
+			}
+			sendMessage(response, new JSONObject());
+		} else {
+			throw new ChipDriveException("Params not Satisfiable");
+		}
 	}
 
 	private void deleteRecursive(Node node) throws ChipDriveException, ChipDriveException, JSONException {
@@ -423,7 +481,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 				long size = size(fileid);
 				long start = 0;
 				long end = size - 1;
-				if(request.containsHeader("range")) {
+				if(request.hasHeader("range")) {
 					try {
 						start = request.getRangeStart();
 						end = request.getRangeEnd();
@@ -488,6 +546,16 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		stub.put("data", data);
 		response.setContentType("application/json");
 		response.writeText(stub.toString(4));
+	}
+
+	private void sendMessage(DriveResponse response, JSONObject data) throws IOException {
+		JSONObject stub = new JSONObject();
+		stub.put("error", false);
+		stub.put("errorMsg", "");
+		stub.put("login", false);
+		stub.put("data", data);
+		response.setContentType("application/json");
+		response.write(stub.toString(4));
 	}
 
 	private static String getExtension(String name) {
