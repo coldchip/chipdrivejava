@@ -53,7 +53,7 @@ public class ServerThread implements Runnable {
 								}
 							} catch(NumberFormatException e) {
 								Response responseError = new Response(output);
-								responseError.writeText("Invalid Content-Length");
+								responseError.write("Invalid Content-Length");
 							}
 						}
 					}
@@ -99,7 +99,7 @@ public class ServerThread implements Runnable {
 					}
 				}
 				if(isHandled == false) {
-					response.writeText("Unable to process request");
+					response.write("Unable to process request");
 				}
 			}
 		} catch (IOException e) {

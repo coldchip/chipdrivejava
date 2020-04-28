@@ -150,7 +150,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	private void version(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
 		JSONObject config = new JSONObject();
 		config.put("version", "1.3.1");
-		response.setContentType("application/json");
+		response.setHeader("Content-Type", "application/json");
 		response.write(config.toString(4));
 	}
 
@@ -171,7 +171,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		config.put("logo", "https://coldchip.ru/admin/img/logo.png");
 		config.put("gateway", "/api/v1/drive/{method}");
 		config.put("methods", methods);
-		response.setContentType("application/json");
+		response.setHeader("Content-Type", "application/json");
 		response.write(config.toString(4));
 	}
 
@@ -453,7 +453,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		stub.put("errorMsg", data.getString("errorMsg"));
 		stub.put("login", data.getBoolean("login"));
 		stub.put("data", new JSONObject());
-		response.setContentType("application/json");
+		response.setHeader("Content-Type", "application/json");
 		response.write(stub.toString(4));
 	}
 
@@ -463,7 +463,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		stub.put("errorMsg", "");
 		stub.put("login", false);
 		stub.put("data", data);
-		response.setContentType("application/json");
+		response.setHeader("Content-Type", "application/json");
 		response.write(stub.toString(4));
 	}
 

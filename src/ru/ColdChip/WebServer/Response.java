@@ -14,12 +14,17 @@ import ru.ColdChip.ChipDrive.Constants.MimeTypes;
 public class Response {
 	private OutputStream stream;
 	private int status = 200;
-	private String contentType = "text/html";
 	public Request req;
 	private boolean isHeaderSent = false;
 	private HashMap<String, String> headers = new HashMap<String, String>();
 
 	public Response(OutputStream stream) {
+		setStatus(200);
+		setHeader("Content-Type", "text/plain");
+		setHeader("Cache-Control", "no-store");
+		setHeader("Connection", "Keep-Alive");
+		setHeader("Keep-Alive", "timeout=5, max=97");
+		setHeader("Server", "ColdChip Web Servlet/CWS 1.2");
 		this.stream = stream;
 	}
 	public Request getRequest() {
@@ -59,7 +64,7 @@ public class Response {
 		output += "\r\n";
 		return output;
 	}
-	public void writeByte(byte[] data) throws IOException {
+	public void write(byte[] data) throws IOException {
 		if(this.isHeaderSent == false) {
 			String header = buildHeader();
 			this.stream.write(header.getBytes(), 0, header.length());
@@ -67,7 +72,7 @@ public class Response {
 		}
 		this.stream.write(data, 0, data.length);
 	}
-	public void writeByte(byte[] data, int offset, int length) throws IOException {
+	public void write(byte[] data, int offset, int length) throws IOException {
 		if(this.isHeaderSent == false) {
 			String header = buildHeader();
 			this.stream.write(header.getBytes(), 0, header.length());
@@ -75,36 +80,20 @@ public class Response {
 		}
 		this.stream.write(data, offset, length);
 	}
-	public void flush() throws IOException {
-		this.stream.flush();
-	}
-	public void writeText(String data) throws IOException {
-
-		setStatus(getStatus());
-		setHeader("Content-Type", getContentType());
+	public void write(String data) throws IOException {
 		setHeader("Content-Length", Integer.toString(data.length()));
-		setHeader("Cache-Control", "no-store");
-		setHeader("Connection", "Keep-Alive");
-		setHeader("Keep-Alive", "timeout=5, max=97");
-		setHeader("Server", "ColdChip Web Servlet/CWS 1.2");
-		writeByte(data.getBytes(), 0, data.length());
-		this.stream.flush();
+		if(this.isHeaderSent == false) {
+			String header = buildHeader();
+			this.stream.write(header.getBytes(), 0, header.length());
+			this.isHeaderSent = true;
+		}
+		write(data.getBytes(), 0, data.length());
 	}
-	public void writeText(byte[] data) throws IOException {
-
-		setStatus(getStatus());
-		setHeader("Content-Type", getContentType());
-		setHeader("Content-Length", Integer.toString(data.length));
-		setHeader("Cache-Control", "no-store");
-		setHeader("Connection", "Keep-Alive");
-		setHeader("Keep-Alive", "timeout=5, max=97");
-		setHeader("Server", "ColdChip Web Servlet/CWS 1.2");
-		writeByte(data, 0, data.length);
+	public void flush() throws IOException {
 		this.stream.flush();
 	}
 	public void redirect(String loc) throws IOException {
 		setStatus(302);
-		setHeader("Content-Type", getContentType());
 		setHeader("Content-Length", "0");
 		setHeader("Cache-Control", "no-store");
 		setHeader("Connection", "Keep-Alive");
@@ -124,13 +113,6 @@ public class Response {
 	public int getStatus() {
 		return this.status;
 	}
-	public void setContentType(String contentType) {
-		this.contentType = contentType;
-	}
-	public String getContentType() {
-		return this.contentType;
-	}
-
 	public void serve(String root) throws IOException {
 		try {
 			String path = pathNormalize(getRequest().getPath());
@@ -141,13 +123,13 @@ public class Response {
 				writeFile(pathNormalize(root + "/" + path + "/index.html"));
 			}
 		} catch(FileNotFoundException e) {
-			setContentType("application/json");
 			setStatus(404);
-			writeText("Error 404");
+			setHeader("Content-Type", "application/json");
+			write("Error 404");
 		} catch(Exception e) {
-			setContentType("application/json");
 			setStatus(500);
-			writeText("500 Internal server error");
+			setHeader("Content-Type", "application/json");
+			write("500 Internal server error");
 		}
 	}
 
@@ -164,7 +146,7 @@ public class Response {
 		return name.substring(lastIndexOf + 1);
 	}
 
-	public void writeFile(String fileName) throws IOException, FileNotFoundException {
+	private void writeFile(String fileName) throws IOException, FileNotFoundException {
 		File file = new File(fileName);
 		RandomAccessFile handler = new RandomAccessFile(file, "r");
 		long objectSize = file.length();
@@ -202,7 +184,7 @@ public class Response {
 		for(long p = start; p < end; p += buffer) {
 			int toRead = (int)Math.min(buffer, (end - p) + 1);
 			handler.read(b, 0, toRead);
-			writeByte(b, 0, toRead);
+			write(b, 0, toRead);
 			flush();
 		}
 		handler.close();

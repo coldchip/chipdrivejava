@@ -29,13 +29,13 @@ public class Server {
 
 		server.on("/api/v1/login/state", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {
-				response.writeText("{\"state\":\"NOT_LOGGED_IN\"}");
+				response.write("{\"state\":\"NOT_LOGGED_IN\"}");
 			}
 		});
 
 		server.on("/api/v1/login", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {
-				response.writeText("{\"message\":\"Backend Error\"}");
+				response.write("{\"message\":\"Backend Error\"}");
 			}
 		});
 		

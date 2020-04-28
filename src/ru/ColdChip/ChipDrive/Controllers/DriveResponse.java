@@ -12,12 +12,6 @@ public class DriveResponse {
 	public Response getResponse() {
 		return this.response;
 	}
-	public void setContentType(String contentType) {
-		this.contentType = contentType;
-	}
-	public String getContentType() {
-		return this.contentType;
-	}
 	public void setStatus(int status) {
 		this.getResponse().setStatus(status);
 	}
@@ -25,14 +19,13 @@ public class DriveResponse {
 		this.getResponse().setHeader(key, val);
 	}
 	public void write(String text) throws IOException {
-		this.getResponse().setContentType(this.getContentType());
-		this.getResponse().writeText(text);
+		this.getResponse().write(text);
 	}
 	public void write(byte[] buf) throws IOException {
-		this.getResponse().writeByte(buf);
+		this.getResponse().write(buf);
 	}
 	public void write(byte[] buf, int offset, int length) throws IOException {
-		this.getResponse().writeByte(buf, offset, length);
+		this.getResponse().write(buf, offset, length);
 	}
 	public void flush() throws IOException {
 		this.getResponse().flush();
