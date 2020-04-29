@@ -176,8 +176,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	private void list(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasFolderID()) {
-			String folderid = request.getFolderID();
+		if(request.hasHeader("folder.id")) {
+			String folderid = request.getHeader("folder.id");
 
 			NodeRoot root = new NodeRoot();
 			if(folderid.equals("") && !root.has(folderid)) {
@@ -221,19 +221,23 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	private void link(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasFileID()) {
-			String fileid = request.getFileID();
+		if(request.hasHeader("file.id")) {
+			String fileid = request.getHeader("file.id");
 
 			NodeRoot root = new NodeRoot();
 			Node node = root.get(fileid);
 			if(node instanceof FileObject) {
 				FileObject folder = (FileObject)node;
 				String filename = folder.getName();
+
+				JSONObject property = new JSONObject();
+				property.put("fileid", fileid);
+
 				JSONObject data = new JSONObject();
 				data.put("type", MimeTypes.get(getExtension(filename).toLowerCase()));
 				data.put("ext", getExtension(filename).toLowerCase());
 				data.put("displayName", filename);
-				data.put("url", "/api/v1/drive/item.stream/" + fileid);
+				data.put("url", "/api/v1/drive/item.stream/?props=" + URLEncoder.encode(property.toString(), "UTF-8"));
 
 				sendMessage(response, data);
 			} else {
@@ -245,26 +249,26 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	private void upload(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasFolderID() && request.hasName()) {
-			String folderid = request.getFolderID();
-			String name = request.getName();
+		if(request.hasHeader("folder.id") && request.hasHeader("name")) {
+			String folderid = request.getHeader("folder.id");
+			String name = request.getHeader("name");
 			try {
-				String randomID = randomString(32);
+				if(request.hasHeader("content.length")) {
+					String randomID = randomString(32);
 
-				NodeRoot root = new NodeRoot();
+					NodeRoot root = new NodeRoot();
 
-				FileObject file = new FileObject();
-				file.setName(name);
-				file.setID(randomID);
-				file.setParentID(folderid);
-				file.put(file);
+					FileObject file = new FileObject();
+					file.setName(name);
+					file.setID(randomID);
+					file.setParentID(folderid);
+					file.put(file);
 
-				FolderObject rootDir = (FolderObject)root.get(folderid);
-				rootDir.addChild(file);
-				root.put(rootDir);
+					FolderObject rootDir = (FolderObject)root.get(folderid);
+					rootDir.addChild(file);
+					root.put(rootDir);
 
-				long contentSize = request.getSize();
-				if(contentSize > 0) {
+					long contentSize = Long.parseLong(request.getHeader("content.length"));
 					long i = 0;
 					byte[] data = new byte[8192];
 					while (i < contentSize) {
@@ -276,11 +280,11 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 							throw new IOException("");
 						}
 					}
-				}	
+				} else {
+					throw new ChipDriveException("Unknown Upload Length");
+				}
 			} catch(IOException e) {
 				throw new ChipDriveException("I/O Error");
-			} catch (Exception e) {
-				throw new ChipDriveException("Upload Failed");
 			}
 			sendMessage(response, new JSONObject());
 		} else {
@@ -309,8 +313,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	private void delete(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasItemID()) {
-			String itemid = request.getItemID();
+		if(request.hasHeader("item.id")) {
+			String itemid = request.getHeader("item.id");
 
 			NodeRoot root = new NodeRoot();
 			Node node = root.get(itemid);
@@ -323,9 +327,9 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	private void folder(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasFolderID() && request.hasName()) {
-			String folderid = request.getFolderID();
-			String name = request.getName();
+		if(request.hasHeader("folder.id") && request.hasHeader("name")) {
+			String folderid = request.getHeader("folder.id");
+			String name = request.getHeader("name");
 
 			String randomID = randomString(32);
 
@@ -348,9 +352,9 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	private void rename(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasItemID() && request.hasName()) {
-			String itemid = request.getItemID();
-			String name = request.getName();
+		if(request.hasHeader("item.id") && request.hasHeader("name")) {
+			String itemid = request.getHeader("item.id");
+			String name = request.getHeader("name");
 
 			NodeRoot root = new NodeRoot();
 			Node node = root.get(itemid);
@@ -364,8 +368,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	private void info(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasFileID()) {
-			String fileid = request.getFileID();
+		if(request.hasHeader("file.id")) {
+			String fileid = request.getHeader("file.id");
 
 			NodeRoot root = new NodeRoot();
 
@@ -394,56 +398,60 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	private void stream(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		String fileid = request.getArgs("object");
-		
-		NodeRoot root = new NodeRoot();
-		
-		if(root.has(fileid)) {
-			Node node = root.get(fileid);
-			if(node instanceof FileObject) {
-				String name = node.getName();
-				long size = size(fileid);
-				long start = 0;
-				long end = size - 1;
-				if(request.hasRangeStart() || request.hasRangeEnd()) {
-					if(request.hasRangeStart()) {
-						start = request.getRangeStart();
-					}
-					if(request.hasRangeEnd()) {
-						end = request.getRangeEnd();
-					}
-					if((start >= 0 && start < size) && (end > 0 && end <= size)) {
-						response.setStatus(206);
-						response.setHeader("Accept-Ranges", "bytes");
-						response.setHeader("Content-Range", "bytes " + (start) + "-" + (end) + "/" + size);
+		if(request.hasHeader("file.id")) {
+			String fileid = request.getHeader("file.id");
+			
+			NodeRoot root = new NodeRoot();
+			
+			if(root.has(fileid)) {
+				Node node = root.get(fileid);
+				if(node instanceof FileObject) {
+					String name = node.getName();
+					long size = size(fileid);
+					long start = 0;
+					long end = size - 1;
+					if(request.hasHeader("range.start") || request.hasHeader("range.end")) {
+						if(request.hasHeader("range.start")) {
+							start = Long.parseLong(request.getHeader("range.start"));
+						}
+						if(request.hasHeader("range.end")) {
+							end = Long.parseLong(request.getHeader("range.end"));
+						}
+						if((start >= 0 && start < size) && (end > 0 && end <= size)) {
+							response.setHeader("status", "206");
+							response.setHeader("Accept-Ranges", "bytes");
+							response.setHeader("Content-Range", "bytes " + (start) + "-" + (end) + "/" + size);
+						} else {
+							response.setHeader("status", "416");
+							response.setHeader("Accept-Ranges", "bytes");
+							return;
+						}
 					} else {
-						response.setStatus(416);
-						response.setHeader("Accept-Ranges", "bytes");
-						return;
+						response.setHeader("status", "200");
+						response.setHeader("Content-Disposition", "inline; filename=\"" + URLEncoder.encode(name, "UTF-8") + "\"");
+					}
+					response.setHeader("Content-Type", MimeTypes.get(getExtension(name).toLowerCase()));
+					response.setHeader("Content-Length", Long.toString(((end - start) + 1)));
+					response.setHeader("Cache-Control", "no-store");
+					response.setHeader("Connection", "Keep-Alive");
+					response.setHeader("Keep-Alive", "timeout=5, max=97");
+					response.setHeader("Server", " ColdChip Web Servlet/CWS 1.2");
+					int buffer = 8192 * 8;
+					byte[] b = new byte[buffer];
+					for(long p = start; p < end; p += buffer) {
+						int toRead = (int)Math.min(buffer, (end - p) + 1);
+						read(fileid, b, p, toRead);
+						response.write(b, 0, toRead); 
+						response.flush();
 					}
 				} else {
-					response.setStatus(200);
-					response.setHeader("Content-Disposition", "inline; filename=\"" + URLEncoder.encode(name, "UTF-8") + "\"");
-				}
-				response.setHeader("Content-Type", MimeTypes.get(getExtension(name).toLowerCase()));
-				response.setHeader("Content-Length", Long.toString(((end - start) + 1)));
-				response.setHeader("Cache-Control", "no-store");
-				response.setHeader("Connection", "Keep-Alive");
-				response.setHeader("Keep-Alive", "timeout=5, max=97");
-				response.setHeader("Server", " ColdChip Web Servlet/CWS 1.2");
-				int buffer = 8192 * 8;
-				byte[] b = new byte[buffer];
-				for(long p = start; p < end; p += buffer) {
-					int toRead = (int)Math.min(buffer, (end - p) + 1);
-					read(fileid, b, p, toRead);
-					response.write(b, 0, toRead); 
-					response.flush();
+					throw new ChipDriveException("Object not a type of file");
 				}
 			} else {
-				throw new ChipDriveException("Object not a type of file");
+				throw new ChipDriveException("Object doesn't exists");
 			}
 		} else {
-			throw new ChipDriveException("Object doesn't exists");
+			throw new ChipDriveException("Params not Satisfiable");
 		}
 	}
 

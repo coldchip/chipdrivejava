@@ -96,19 +96,17 @@ public class Server {
 							drive.enqueue(ChipDrive.QUOTA, request, response);
 						}
 					break;
+					case "item.stream":
+						{
+							drive.enqueue(ChipDrive.STREAM, request, response);
+						}
+					break;
 					default:
 						{
 							drive.enqueue(ChipDrive.UNKNOWN, request, response);
 						}
 					break;
 				}
-			}
-		});
-
-		server.on("/api/v1/drive/item.stream/{object}", new HTTPRoute() {
-			@Override
-			public void handle(Request request, Response response) throws IOException {
-				drive.enqueue(ChipDrive.STREAM, request, response);
 			}
 		});
 
