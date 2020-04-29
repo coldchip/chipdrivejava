@@ -54,75 +54,39 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 				}
 				break;
 				case ChipDrive.LIST: {
-					if(isAuthed() == true) {
-						this.list(driveRequest, driveResponse);
-					} else {
-						throw new ChipDriveLoginException("Login Required");
-					}
+					this.list(driveRequest, driveResponse);
 				}
 				break;
 				case ChipDrive.LINK: {
-					if(isAuthed() == true) {
-						this.link(driveRequest, driveResponse);
-					} else {
-						throw new ChipDriveLoginException("Login Required");
-					}
+					this.link(driveRequest, driveResponse);
 				}
 				break;
 				case ChipDrive.UPLOAD: {
-					if(isAuthed() == true) {
-						this.upload(driveRequest, driveResponse);
-					} else {
-						throw new ChipDriveLoginException("Login Required");
-					}
+					this.upload(driveRequest, driveResponse);
 				}
 				break;
 				case ChipDrive.DELETE: {
-					if(isAuthed() == true) {
-						this.delete(driveRequest, driveResponse);
-					} else {
-						throw new ChipDriveLoginException("Login Required");
-					}
+					this.delete(driveRequest, driveResponse);
 				}
 				break;
 				case ChipDrive.FOLDER: {
-					if(isAuthed() == true) {
-						this.folder(driveRequest, driveResponse);
-					} else {
-						throw new ChipDriveLoginException("Login Required");
-					}
+					this.folder(driveRequest, driveResponse);
 				}
 				break;
 				case ChipDrive.RENAME: {
-					if(isAuthed() == true) {
-						this.rename(driveRequest, driveResponse);
-					} else {
-						throw new ChipDriveLoginException("Login Required");
-					}
+					this.rename(driveRequest, driveResponse);
 				}
 				break;
 				case ChipDrive.INFO: {
-					if(isAuthed() == true) {
-						this.info(driveRequest, driveResponse);
-					} else {
-						throw new ChipDriveLoginException("Login Required");
-					}
+					this.info(driveRequest, driveResponse);
 				}
 				break;
 				case ChipDrive.QUOTA: {
-					if(isAuthed() == true) {
-						this.quota(driveRequest, driveResponse);
-					} else {
-						throw new ChipDriveLoginException("Login Required");
-					}
+					this.quota(driveRequest, driveResponse);
 				}
 				break;
 				case ChipDrive.STREAM: {
-					if(isAuthed() == true) {
-						this.stream(driveRequest, driveResponse);
-					} else {
-						throw new ChipDriveLoginException("Login Required");
-					}
+					this.stream(driveRequest, driveResponse);
 				}
 				break;
 				case ChipDrive.UNKNOWN: {
@@ -139,18 +103,13 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 			error.put("errorMsg", e.toString());
 			error.put("login", false);
 			sendError(driveResponse, error);
-		} catch(ChipDriveLoginException e) {
-			JSONObject error = new JSONObject();
-			error.put("errorMsg", e.toString());
-			error.put("login", true);
-			sendError(driveResponse, error);
 		}
 	}
 
 	private void version(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
 		JSONObject config = new JSONObject();
 		config.put("version", "1.3.1");
-		response.setHeader("Content-Type", "application/json");
+		response.setHeader(DriveResponse.CONTENT_TYPE, "application/json");
 		response.write(config.toString(4));
 	}
 
@@ -171,13 +130,13 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		config.put("logo", "https://coldchip.ru/admin/img/logo.png");
 		config.put("gateway", "/api/v1/drive/{method}");
 		config.put("methods", methods);
-		response.setHeader("Content-Type", "application/json");
+		response.setHeader(DriveResponse.CONTENT_TYPE, "application/json");
 		response.write(config.toString(4));
 	}
 
 	private void list(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasHeader("folder.id")) {
-			String folderid = request.getHeader("folder.id");
+		if(request.hasHeader(DriveRequest.FOLDER_ID)) {
+			String folderid = request.getHeader(DriveRequest.FOLDER_ID);
 
 			NodeRoot root = new NodeRoot();
 			if(folderid.equals("") && !root.has(folderid)) {
@@ -221,8 +180,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	private void link(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasHeader("file.id")) {
-			String fileid = request.getHeader("file.id");
+		if(request.hasHeader(DriveRequest.FILE_ID)) {
+			String fileid = request.getHeader(DriveRequest.FILE_ID);
 
 			NodeRoot root = new NodeRoot();
 			Node node = root.get(fileid);
@@ -249,11 +208,11 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	private void upload(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasHeader("folder.id") && request.hasHeader("name")) {
-			String folderid = request.getHeader("folder.id");
-			String name = request.getHeader("name");
+		if(request.hasHeader(DriveRequest.FOLDER_ID) && request.hasHeader(DriveRequest.NAME)) {
+			String folderid = request.getHeader(DriveRequest.FOLDER_ID);
+			String name = request.getHeader(DriveRequest.NAME);
 			try {
-				if(request.hasHeader("content.length")) {
+				if(request.hasHeader(DriveRequest.CONTENT_LENGTH)) {
 					String randomID = randomString(32);
 
 					NodeRoot root = new NodeRoot();
@@ -268,7 +227,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 					rootDir.addChild(file);
 					root.put(rootDir);
 
-					long contentSize = Long.parseLong(request.getHeader("content.length"));
+					long contentSize = Long.parseLong(request.getHeader(DriveRequest.CONTENT_LENGTH));
 					long i = 0;
 					byte[] data = new byte[8192];
 					while (i < contentSize) {
@@ -313,8 +272,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	private void delete(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasHeader("item.id")) {
-			String itemid = request.getHeader("item.id");
+		if(request.hasHeader(DriveRequest.ITEM_ID)) {
+			String itemid = request.getHeader(DriveRequest.ITEM_ID);
 
 			NodeRoot root = new NodeRoot();
 			Node node = root.get(itemid);
@@ -327,9 +286,9 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	private void folder(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasHeader("folder.id") && request.hasHeader("name")) {
-			String folderid = request.getHeader("folder.id");
-			String name = request.getHeader("name");
+		if(request.hasHeader(DriveRequest.FOLDER_ID) && request.hasHeader(DriveRequest.NAME)) {
+			String folderid = request.getHeader(DriveRequest.FOLDER_ID);
+			String name = request.getHeader(DriveRequest.NAME);
 
 			String randomID = randomString(32);
 
@@ -352,9 +311,9 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	private void rename(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasHeader("item.id") && request.hasHeader("name")) {
-			String itemid = request.getHeader("item.id");
-			String name = request.getHeader("name");
+		if(request.hasHeader(DriveRequest.ITEM_ID) && request.hasHeader(DriveRequest.NAME)) {
+			String itemid = request.getHeader(DriveRequest.ITEM_ID);
+			String name = request.getHeader(DriveRequest.NAME);
 
 			NodeRoot root = new NodeRoot();
 			Node node = root.get(itemid);
@@ -368,8 +327,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	private void info(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasHeader("file.id")) {
-			String fileid = request.getHeader("file.id");
+		if(request.hasHeader(DriveRequest.FILE_ID)) {
+			String fileid = request.getHeader(DriveRequest.FILE_ID);
 
 			NodeRoot root = new NodeRoot();
 
@@ -398,8 +357,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	private void stream(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasHeader("file.id")) {
-			String fileid = request.getHeader("file.id");
+		if(request.hasHeader(DriveRequest.FILE_ID)) {
+			String fileid = request.getHeader(DriveRequest.FILE_ID);
 			
 			NodeRoot root = new NodeRoot();
 			
@@ -410,32 +369,28 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 					long size = size(fileid);
 					long start = 0;
 					long end = size - 1;
-					if(request.hasHeader("range.start") || request.hasHeader("range.end")) {
-						if(request.hasHeader("range.start")) {
-							start = Long.parseLong(request.getHeader("range.start"));
+					if(request.hasHeader(DriveRequest.RANGE_START) || request.hasHeader(DriveRequest.RANGE_END)) {
+						if(request.hasHeader(DriveRequest.RANGE_START)) {
+							start = Long.parseLong(request.getHeader(DriveRequest.RANGE_START));
 						}
-						if(request.hasHeader("range.end")) {
-							end = Long.parseLong(request.getHeader("range.end"));
+						if(request.hasHeader(DriveRequest.RANGE_END)) {
+							end = Long.parseLong(request.getHeader(DriveRequest.RANGE_END));
 						}
 						if((start >= 0 && start < size) && (end > 0 && end <= size)) {
-							response.setHeader("status", "206");
-							response.setHeader("Accept-Ranges", "bytes");
-							response.setHeader("Content-Range", "bytes " + (start) + "-" + (end) + "/" + size);
+							response.setHeader(DriveResponse.STATUS, "206");
+							response.setHeader(DriveResponse.ACCEPT_RANGES, "bytes");
+							response.setHeader(DriveResponse.CONTENT_RANGE, "bytes " + (start) + "-" + (end) + "/" + size);
 						} else {
-							response.setHeader("status", "416");
-							response.setHeader("Accept-Ranges", "bytes");
+							response.setHeader(DriveResponse.STATUS, "416");
+							response.setHeader(DriveResponse.ACCEPT_RANGES, "bytes");
 							return;
 						}
 					} else {
-						response.setHeader("status", "200");
-						response.setHeader("Content-Disposition", "inline; filename=\"" + URLEncoder.encode(name, "UTF-8") + "\"");
+						response.setHeader(DriveResponse.STATUS, "200");
+						response.setHeader(DriveResponse.CONTENT_DISPOSITION, "inline; filename=\"" + URLEncoder.encode(name, "UTF-8") + "\"");
 					}
-					response.setHeader("Content-Type", MimeTypes.get(getExtension(name).toLowerCase()));
-					response.setHeader("Content-Length", Long.toString(((end - start) + 1)));
-					response.setHeader("Cache-Control", "no-store");
-					response.setHeader("Connection", "Keep-Alive");
-					response.setHeader("Keep-Alive", "timeout=5, max=97");
-					response.setHeader("Server", " ColdChip Web Servlet/CWS 1.2");
+					response.setHeader(DriveResponse.CONTENT_TYPE, MimeTypes.get(getExtension(name).toLowerCase()));
+					response.setHeader(DriveResponse.CONTENT_LENGTH, Long.toString(((end - start) + 1)));
 					int buffer = 8192 * 8;
 					byte[] b = new byte[buffer];
 					for(long p = start; p < end; p += buffer) {
@@ -461,7 +416,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		stub.put("errorMsg", data.getString("errorMsg"));
 		stub.put("login", data.getBoolean("login"));
 		stub.put("data", new JSONObject());
-		response.setHeader("Content-Type", "application/json");
+		response.setHeader(DriveResponse.CONTENT_TYPE, "application/json");
 		response.write(stub.toString(4));
 	}
 
@@ -471,7 +426,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		stub.put("errorMsg", "");
 		stub.put("login", false);
 		stub.put("data", data);
-		response.setHeader("Content-Type", "application/json");
+		response.setHeader(DriveResponse.CONTENT_TYPE, "application/json");
 		response.write(stub.toString(4));
 	}
 
