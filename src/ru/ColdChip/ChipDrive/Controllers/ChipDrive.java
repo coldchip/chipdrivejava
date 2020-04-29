@@ -108,7 +108,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 
 	private void version(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
 		JSONObject config = new JSONObject();
-		config.put("version", "1.3.1");
+		config.put("version", "V2.3.2");
 		response.setHeader(DriveResponse.CONTENT_TYPE, "application/json");
 		response.write(config.toString(4));
 	}

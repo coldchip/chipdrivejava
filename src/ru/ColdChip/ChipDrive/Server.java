@@ -20,7 +20,7 @@ public class Server {
 	}
 
 	private void core() {
-		System.out.println("ColdChip Drive V2.3.1 Java");
+		System.out.println("ColdChip Drive V2.3.2 Java");
 		System.out.println("--------------------------");
 
 		ChipDrive drive = new ChipDrive();
