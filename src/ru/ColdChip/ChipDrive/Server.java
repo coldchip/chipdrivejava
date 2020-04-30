@@ -41,13 +41,13 @@ public class Server {
 		
 		server.on("/api/v1/version", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {
-				drive.enqueue(ChipDrive.VERSION, request, response);
+				DriveQueue queue = drive.enqueue(ChipDrive.VERSION, request, response);
 			}
 		});
 
 		server.on("/api/v1/getDriveConfig", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {
-				drive.enqueue(ChipDrive.CONFIG, request, response);
+				DriveQueue queue = drive.enqueue(ChipDrive.CONFIG, request, response);
 			}
 		});
 
@@ -58,52 +58,52 @@ public class Server {
 				switch(mode) {
 					case "files.list":
 						{
-							drive.enqueue(ChipDrive.LIST, request, response);
+							DriveQueue queue = drive.enqueue(ChipDrive.LIST, request, response);
 						}
 					break;
 					case "file.link":
 						{
-							drive.enqueue(ChipDrive.LINK, request, response);
+							DriveQueue queue = drive.enqueue(ChipDrive.LINK, request, response);
 						}
 					break;
 					case "new.upload":
 						{
-							drive.enqueue(ChipDrive.UPLOAD, request, response);
+							DriveQueue queue = drive.enqueue(ChipDrive.UPLOAD, request, response);
 		        		}
 					break;
 					case "file.delete":
 						{
-							drive.enqueue(ChipDrive.DELETE, request, response);
+							DriveQueue queue = drive.enqueue(ChipDrive.DELETE, request, response);
 						}
 					break;
 					case "new.folder":
 						{
-							drive.enqueue(ChipDrive.FOLDER, request, response);
+							DriveQueue queue = drive.enqueue(ChipDrive.FOLDER, request, response);
 						}
 					break;
 					case "item.rename":
 						{
-							drive.enqueue(ChipDrive.RENAME, request, response);
+							DriveQueue queue = drive.enqueue(ChipDrive.RENAME, request, response);
 						}
 					break;
 					case "item.info":
 						{
-							drive.enqueue(ChipDrive.INFO, request, response);
+							DriveQueue queue = drive.enqueue(ChipDrive.INFO, request, response);
 						}
 					break;
 					case "drive.quota":
 						{
-							drive.enqueue(ChipDrive.QUOTA, request, response);
+							DriveQueue queue = drive.enqueue(ChipDrive.QUOTA, request, response);
 						}
 					break;
 					case "item.stream":
 						{
-							drive.enqueue(ChipDrive.STREAM, request, response);
+							DriveQueue queue = drive.enqueue(ChipDrive.STREAM, request, response);
 						}
 					break;
 					default:
 						{
-							drive.enqueue(ChipDrive.UNKNOWN, request, response);
+							DriveQueue queue = drive.enqueue(ChipDrive.UNKNOWN, request, response);
 						}
 					break;
 				}

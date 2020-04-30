@@ -10,7 +10,7 @@ public class DriveResponse {
 	public static final int CONTENT_LENGTH      = 2 << 8;
 	public static final int ACCEPT_RANGES       = 3 << 8;
 	public static final int CONTENT_RANGE       = 4 << 8;
-	public static final int CONTENT_DISPOSITION = 5 << 8;
+	public static final int CONTENT_NAME        = 5 << 8;
 
 	public DriveResponse(Response response) {
 		this.response = response;
@@ -33,7 +33,7 @@ public class DriveResponse {
 			case DriveResponse.CONTENT_RANGE: {
 				this.response.setHeader("Content-Range", val);
 			} break;
-			case DriveResponse.CONTENT_DISPOSITION: {
+			case DriveResponse.CONTENT_NAME: {
 				this.response.setHeader("Content-Disposition", val);
 			} break;
 		}

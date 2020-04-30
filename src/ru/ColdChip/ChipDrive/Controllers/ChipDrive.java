@@ -9,6 +9,7 @@ import java.io.*;
 import java.util.*;
 import java.net.URLEncoder;
 import org.JSON.*;
+import java.util.concurrent.TimeUnit;
 
 public class ChipDrive extends ChipFS implements IChipDrive {
 
@@ -26,83 +27,88 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	public static final int UNKNOWN = 12;
 
 	private static volatile int threads = 0;
+	private static volatile ArrayList<DriveQueue> queue = new ArrayList<DriveQueue>();
 
 	public ChipDrive() {
 
 	}
 
-	public void enqueue(int method, Request request, Response response) throws IOException {
+	public DriveQueue enqueue(int method, Request request, Response response) throws IOException {
 		try {
 			threads++;
 			if(threads < 255) {
-				this.dispatch(method, new DriveRequest(request), new DriveResponse(response));
+				DriveRequest driveRequest = new DriveRequest(request);
+				DriveResponse driveResponse = new DriveResponse(response);
+				DriveQueue queue = new DriveQueue(method, driveRequest, driveResponse);
+				//this.queue.add(queue);
+				this.dispatch(queue);
+				return queue;
 			}
+			return null;
 		} finally {
 			threads--;
 		}
 	}
 
-	private void dispatch(int method, DriveRequest driveRequest, DriveResponse driveResponse) throws IOException {
+	private void dispatch(DriveQueue queue) throws IOException {
+		int method = queue.getMethod();
+		DriveRequest request = queue.getRequest();
+		DriveResponse response = queue.getResponse();
 		try {
 			switch(method) {
 				case ChipDrive.VERSION: {
-					this.version(driveRequest, driveResponse);
+					this.version(request, response);
 				}
 				break;
 				case ChipDrive.CONFIG: {
-					this.config(driveRequest, driveResponse);
+					this.config(request, response);
 				}
 				break;
 				case ChipDrive.LIST: {
-					this.list(driveRequest, driveResponse);
+					this.list(request, response);
 				}
 				break;
 				case ChipDrive.LINK: {
-					this.link(driveRequest, driveResponse);
+					this.link(request, response);
 				}
 				break;
 				case ChipDrive.UPLOAD: {
-					this.upload(driveRequest, driveResponse);
+					this.upload(request, response);
 				}
 				break;
 				case ChipDrive.DELETE: {
-					this.delete(driveRequest, driveResponse);
+					this.delete(request, response);
 				}
 				break;
 				case ChipDrive.FOLDER: {
-					this.folder(driveRequest, driveResponse);
+					this.folder(request, response);
 				}
 				break;
 				case ChipDrive.RENAME: {
-					this.rename(driveRequest, driveResponse);
+					this.rename(request, response);
 				}
 				break;
 				case ChipDrive.INFO: {
-					this.info(driveRequest, driveResponse);
+					this.info(request, response);
 				}
 				break;
 				case ChipDrive.QUOTA: {
-					this.quota(driveRequest, driveResponse);
+					this.quota(request, response);
 				}
 				break;
 				case ChipDrive.STREAM: {
-					this.stream(driveRequest, driveResponse);
+					this.stream(request, response);
 				}
 				break;
 				case ChipDrive.UNKNOWN: {
 					throw new ChipDriveException("Unknown Mode");
 				}
 			}
-		} catch(JSONException e) {
-			JSONObject error = new JSONObject();
-			error.put("errorMsg", e.toString());
-			error.put("login", false);
-			sendError(driveResponse, error);
 		} catch(ChipDriveException e) {
 			JSONObject error = new JSONObject();
 			error.put("errorMsg", e.toString());
 			error.put("login", false);
-			sendError(driveResponse, error);
+			sendError(response, error);
 		}
 	}
 
@@ -387,7 +393,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 						}
 					} else {
 						response.setHeader(DriveResponse.STATUS, "200");
-						response.setHeader(DriveResponse.CONTENT_DISPOSITION, "inline; filename=\"" + URLEncoder.encode(name, "UTF-8") + "\"");
+						response.setHeader(DriveResponse.CONTENT_NAME, "inline; filename=\"" + URLEncoder.encode(name, "UTF-8") + "\"");
 					}
 					response.setHeader(DriveResponse.CONTENT_TYPE, MimeTypes.get(getExtension(name).toLowerCase()));
 					response.setHeader(DriveResponse.CONTENT_LENGTH, Long.toString(((end - start) + 1)));

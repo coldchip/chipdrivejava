@@ -109,11 +109,13 @@ public class ServerThread implements Runnable {
 		} finally {
 			try {
 				input.close();
+			} catch (IOException e) {}
+			try {
 				output.close();
+			} catch (IOException e) {}
+			try {
 				connect.close();
-			} catch (IOException e) {
-				
-			}
+			} catch (IOException e) {}
 		}
 	}
 
