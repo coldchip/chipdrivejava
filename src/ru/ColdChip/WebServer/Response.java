@@ -24,7 +24,7 @@ public class Response {
 		setHeader("Cache-Control", "no-store");
 		setHeader("Connection", "Keep-Alive");
 		setHeader("Keep-Alive", "timeout=5, max=97");
-		setHeader("Server", "ColdChip Web Servlet/CWS 1.2");
+		setHeader("Server", "ColdChip Web Servlet/CWS 2.0");
 		this.stream = stream;
 	}
 	public Request getRequest() {
@@ -99,7 +99,7 @@ public class Response {
 		setHeader("Connection", "Keep-Alive");
 		setHeader("Keep-Alive", "timeout=5, max=97");
 		setHeader("Location", loc);
-		setHeader("Server", "ColdChip Web Servlet/CWS 1.2");
+		setHeader("Server", "ColdChip Web Servlet/CWS 2.0");
 		if(this.isHeaderSent == false) {
 			String header = buildHeader();
 			this.stream.write(header.getBytes(), 0, header.length());

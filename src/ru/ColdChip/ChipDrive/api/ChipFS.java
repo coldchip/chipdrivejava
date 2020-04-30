@@ -6,6 +6,7 @@ import java.util.*;
 public class ChipFS {
 
 	private String root = "buckets";
+	private LinkedHashMap<String, RandomAccessFile> lookup = new LinkedHashMap<String, RandomAccessFile>();
 
 	public ChipFS() {
 		
@@ -36,23 +37,32 @@ public class ChipFS {
 		return new File(root + "/" + id).length();
 	}
 
+	private RandomAccessFile getHandler(String id) throws IOException {
+		if(this.lookup.containsKey(id)) {
+			return this.lookup.get(id);
+		} else {
+			if(this.lookup.size() > 63) {
+				Map.Entry<String, RandomAccessFile> entry = this.lookup.entrySet().iterator().next();
+				entry.getValue().close();
+				this.lookup.remove(entry.getKey());
+			}
+			RandomAccessFile io = new RandomAccessFile(new File(root + "/" + id), "rw");
+			this.lookup.put(id, io);
+			return io;
+		}
+	}
+
 	public boolean read(String id, byte[] buffer, long offset, int size) throws IOException {
-		RandomAccessFile io = new RandomAccessFile(new File(root + "/" + id), "r");
+		RandomAccessFile io = getHandler(id);
 		io.seek(offset);
 		io.read(buffer, 0, size);
-		io.close();
 		return true;
 	}
 
 	public boolean write(String id, byte[] buffer, long offset, int size) throws IOException {
-		if(!exists(id)) {
-			create(id);
-		}
-
-		RandomAccessFile io = new RandomAccessFile(new File(root + "/" + id), "rw");
+		RandomAccessFile io = getHandler(id);
 		io.seek(offset);
 		io.write(buffer, 0, size);
-		io.close();
 		return true;
 	}
 

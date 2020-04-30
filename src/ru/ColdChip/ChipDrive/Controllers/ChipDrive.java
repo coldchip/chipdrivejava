@@ -391,14 +391,14 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 					}
 					response.setHeader(DriveResponse.CONTENT_TYPE, MimeTypes.get(getExtension(name).toLowerCase()));
 					response.setHeader(DriveResponse.CONTENT_LENGTH, Long.toString(((end - start) + 1)));
-					int buffer = 8192 * 8;
+					int buffer = 8192 * 2;
 					byte[] b = new byte[buffer];
 					for(long p = start; p < end; p += buffer) {
 						int toRead = (int)Math.min(buffer, (end - p) + 1);
 						read(fileid, b, p, toRead);
 						response.write(b, 0, toRead); 
-						response.flush();
 					}
+					response.flush();
 				} else {
 					throw new ChipDriveException("Object not a type of file");
 				}
