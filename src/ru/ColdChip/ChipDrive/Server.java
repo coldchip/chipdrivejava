@@ -20,12 +20,15 @@ public class Server {
 	}
 
 	private void core() {
-		System.out.println("ColdChip Drive V2.3.2 Java");
-		System.out.println("--------------------------");
+		ChipDrive.log("ColdChip Drive V2.3.2 Java");
+		ChipDrive.log("--------------------------");
+		ChipDrive.log("Starting ChipDrive HTTP On Port " + PORT);
+		HTTPServer server = new HTTPServer(PORT);
+		ChipDrive.log("HTTP Server Started");
 
 		ChipDrive drive = new ChipDrive();
-
-		HTTPServer server = new HTTPServer(PORT);
+		
+		
 
 		server.on("/api/v1/login/state", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {
@@ -41,13 +44,13 @@ public class Server {
 		
 		server.on("/api/v1/version", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {
-				DriveQueue queue = drive.enqueue(ChipDrive.VERSION, request, response);
+				drive.enqueue(ChipDrive.VERSION, request, response);
 			}
 		});
 
 		server.on("/api/v1/getDriveConfig", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {
-				DriveQueue queue = drive.enqueue(ChipDrive.CONFIG, request, response);
+				drive.enqueue(ChipDrive.CONFIG, request, response);
 			}
 		});
 
@@ -58,52 +61,52 @@ public class Server {
 				switch(mode) {
 					case "files.list":
 						{
-							DriveQueue queue = drive.enqueue(ChipDrive.LIST, request, response);
+							drive.enqueue(ChipDrive.LIST, request, response);
 						}
 					break;
 					case "file.link":
 						{
-							DriveQueue queue = drive.enqueue(ChipDrive.LINK, request, response);
+							drive.enqueue(ChipDrive.LINK, request, response);
 						}
 					break;
 					case "new.upload":
 						{
-							DriveQueue queue = drive.enqueue(ChipDrive.UPLOAD, request, response);
+							drive.enqueue(ChipDrive.UPLOAD, request, response);
 		        		}
 					break;
 					case "file.delete":
 						{
-							DriveQueue queue = drive.enqueue(ChipDrive.DELETE, request, response);
+							drive.enqueue(ChipDrive.DELETE, request, response);
 						}
 					break;
 					case "new.folder":
 						{
-							DriveQueue queue = drive.enqueue(ChipDrive.FOLDER, request, response);
+							drive.enqueue(ChipDrive.FOLDER, request, response);
 						}
 					break;
 					case "item.rename":
 						{
-							DriveQueue queue = drive.enqueue(ChipDrive.RENAME, request, response);
+							drive.enqueue(ChipDrive.RENAME, request, response);
 						}
 					break;
 					case "item.info":
 						{
-							DriveQueue queue = drive.enqueue(ChipDrive.INFO, request, response);
+							drive.enqueue(ChipDrive.INFO, request, response);
 						}
 					break;
 					case "drive.quota":
 						{
-							DriveQueue queue = drive.enqueue(ChipDrive.QUOTA, request, response);
+							drive.enqueue(ChipDrive.QUOTA, request, response);
 						}
 					break;
 					case "item.stream":
 						{
-							DriveQueue queue = drive.enqueue(ChipDrive.STREAM, request, response);
+							drive.enqueue(ChipDrive.STREAM, request, response);
 						}
 					break;
 					default:
 						{
-							DriveQueue queue = drive.enqueue(ChipDrive.UNKNOWN, request, response);
+							drive.enqueue(ChipDrive.UNKNOWN, request, response);
 						}
 					break;
 				}

@@ -7,6 +7,7 @@ import ru.ColdChip.ChipDrive.Object.*;
 import ru.ColdChip.ChipDrive.Constants.MimeTypes;
 import java.io.*;
 import java.util.*;
+import java.text.*;
 import java.net.URLEncoder;
 import org.JSON.*;
 import java.util.concurrent.TimeUnit;
@@ -27,24 +28,30 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	public static final int UNKNOWN = 12;
 
 	private static volatile int threads = 0;
-	private static volatile ArrayList<DriveQueue> queue = new ArrayList<DriveQueue>();
 
 	public ChipDrive() {
-
+		log("Starting ChipDrive Ticker");
+		Thread t = new Thread() {
+			public void run() {
+				while(true) {
+					
+				}
+			}
+		};
+		t.start();
+		log("ChipDrive Ticker Started");
+		log("-----DONE-----");
 	}
 
-	public DriveQueue enqueue(int method, Request request, Response response) throws IOException {
+	public void enqueue(int method, Request request, Response response) throws IOException {
 		try {
 			threads++;
 			if(threads < 255) {
 				DriveRequest driveRequest = new DriveRequest(request);
 				DriveResponse driveResponse = new DriveResponse(response);
 				DriveQueue queue = new DriveQueue(method, driveRequest, driveResponse);
-				//this.queue.add(queue);
 				this.dispatch(queue);
-				return queue;
 			}
-			return null;
 		} finally {
 			threads--;
 		}
@@ -442,6 +449,12 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		    return ""; // empty extension
 		}
 		return name.substring(lastIndexOf + 1);
+	}
+
+	public static void log(String text) {
+		DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+		Date date = new Date();
+		System.out.println("[" + dateFormat.format(date) + "] [ChipDrive]: " + text);
 	}
 
 	private static String randomString(int length) {

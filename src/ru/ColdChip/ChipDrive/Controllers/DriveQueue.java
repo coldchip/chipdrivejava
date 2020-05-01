@@ -4,7 +4,7 @@ public class DriveQueue {
 	private int method;
 	private DriveRequest request;
 	private DriveResponse response;
-	private boolean done = false;
+	private boolean ready = false;
 
 	public DriveQueue(int method, DriveRequest request, DriveResponse response) {
 		this.method = method;
@@ -24,11 +24,11 @@ public class DriveQueue {
 		return this.response;
 	}
 
-	public void setDone(boolean done) {
-		this.done = done;
+	public void setDone(boolean ready) {
+		this.ready = ready;
 	}
 
-	public boolean getDone() {
-		return this.done;
+	public boolean isReady() {
+		return this.ready;
 	}
 }
