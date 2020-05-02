@@ -30,16 +30,6 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	private static volatile int threads = 0;
 
 	public ChipDrive() {
-		log("Starting ChipDrive Ticker");
-		Thread t = new Thread() {
-			public void run() {
-				while(true) {
-					
-				}
-			}
-		};
-		t.start();
-		log("ChipDrive Ticker Started");
 		log("-----DONE-----");
 	}
 
