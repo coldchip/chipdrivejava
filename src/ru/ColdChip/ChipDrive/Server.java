@@ -26,7 +26,18 @@ public class Server {
 		HTTPServer server = new HTTPServer(PORT);
 		ChipDrive.log("HTTP Server Started");
 
+		//ChipDrive drive = new ChipDrive();
+		
+		
 
+		
+
+		server.on("/{*}", new HTTPRoute() {
+			@Override
+			public void handle(Request request, Response response) throws IOException {
+				response.serve("html");
+			}
+		});
 
 		server.run();
 	}
