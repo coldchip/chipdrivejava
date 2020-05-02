@@ -5,6 +5,7 @@ import java.util.*;
 
 public class ChipFS {
 
+	private byte[] key = "2SqxJCHaf5kjfsz8QESU7tj2mfNGad4Dchy3jDwyG3MUR4KHx7BjHWYed9QaWtbv9t6WCT2RfVQXmrAchP8nSLPZtwQKzV4Cx9X732P9NhuETFRY2mrtE7Eyn8HZG7gyyGk7TfT928DpBxRvPMCVLya87kxtGupwp5nVNnUXsX7XAtyFBRhqfDDrAsU5YWFvZ62TPrRKcEGRcLf2JJma8QgKbSH2uyXTGPbvcUz2ARaqrGCaN3UBZkMHDnW9UvKkSP5WajuHwjE4FgdANED28mxgrDTAPR3uTP7LaW9gjhyyvyGj4YZnUMhZVyEeqfWxWykUKRkGqVSzzECG9g3yq8b5K4nY7JQZyHw6XxbgxEnA2ssgqbjUuhLCAPfDWwKF9S8zjtmnebRqLKkTAcGMQwxp3be4aAUfZufyYY4WQc6nLJaNvVm6grDKGRFwVDgZQvXEPRstkcLJzZpvRkEPnS4U3jNcxt87rcZ4RWzDpbDKS7gG6Y23qKQ2kjZ8Cp7XKxAtwZyM64UfSZd4JwSsz8nmEzFvaZHpKyC5ZGs8j4TSAxHGdkgXCFEct6MLzWDBJP8WDeeaqpGzYUtbwEF9AWHqApCCA2h5ftKsH2Emw55x4vJ65zA4a7tneNkM6JR9TJFxa3n8ZtjphTynqtR5cBGjcYKUjqr8PALrptGVDXa7wZM7Dy8mpQWHaDW6pMqLxQJsabuNkwDwyzC88PPUcTtVjPRmZYdMvDfePa33nNDLxAgmxU3VC3B6mX6tAsXAj2EmKCzeH94ZwqKkh92Ls3qtFyeEAyqCtygUEQbec8FDtYMXuWmjYNYfAzRXMuCzTCXJheFjcWnjeCNd6Ky2kCjZxAsYwSw2ZYKjbkjjPajnCzEmHq6u8DwbPr8egRTRywuuT8Sp4qSdaTDuXhWFGDJM2LFAaECFVdTWVNWPg5mJUk6zyxt59e4XzHYkgHj5NcFQZm9WxZdpWgFgFEbT5cTFGpXrVzfz88sQGBXGP4D7XMVyW8bJjLFj3H93xMeX".getBytes();
 	private String root = "buckets";
 	private LinkedHashMap<String, RandomAccessFile> lookup = new LinkedHashMap<String, RandomAccessFile>();
 
@@ -56,10 +57,16 @@ public class ChipFS {
 		RandomAccessFile io = getHandler(id);
 		io.seek(offset);
 		io.read(buffer, 0, size);
+		for(int i = 0; i < buffer.length; i++) {
+			buffer[i] = (byte)(buffer[i] ^ key[i % key.length]);
+		}
 		return true;
 	}
 
 	public boolean write(String id, byte[] buffer, long offset, int size) throws IOException {
+		for(int i = 0; i < size; i++) {
+			buffer[i] = (byte)(buffer[i] ^ key[i % key.length]);
+		}
 		RandomAccessFile io = getHandler(id);
 		io.seek(offset);
 		io.write(buffer, 0, size);

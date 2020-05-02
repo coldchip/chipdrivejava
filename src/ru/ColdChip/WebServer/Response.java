@@ -21,7 +21,9 @@ public class Response {
 	public Response(OutputStream stream) {
 		setStatus(200);
 		setHeader("Content-Type", "text/plain");
-		setHeader("Cache-Control", "no-store");
+		setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+		setHeader("Pragma", "no-cache");
+		setHeader("Expires", "0");
 		setHeader("Connection", "Keep-Alive");
 		setHeader("Keep-Alive", "timeout=5, max=97");
 		setHeader("Server", "ColdChip Web Servlet/CWS 2.0");
