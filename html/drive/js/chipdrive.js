@@ -693,7 +693,7 @@ function ChipDrive() {
 									extra("Login Required, Press OKAY to Login", function() {
 										if(that.isLoggingIn == false) {
 											that.isLoggingIn = true;
-											that.login();
+											that.login(response["url"]);
 										}
 									});
 								} else {

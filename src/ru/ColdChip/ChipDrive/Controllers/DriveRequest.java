@@ -17,6 +17,7 @@ public class DriveRequest {
 	public static final int FILE_ID             = 5 << 0;
 	public static final int NAME                = 6 << 0;
 	public static final int ITEM_ID             = 7 << 0;
+	public static final int AUTH_TOKEN          = 8 << 0;
 
 	public DriveRequest(Request request) {
 		this.request = request;
@@ -32,6 +33,9 @@ public class DriveRequest {
 		
 		try {
 			JSONObject props = new JSONObject(request.getValue("props"));
+			if(props.has("token")) {
+				property.put(DriveRequest.AUTH_TOKEN, props.getString("token"));
+			}
 			if(props.has("folderid")) {
 				property.put(DriveRequest.FOLDER_ID, props.getString("folderid"));
 			}
@@ -52,10 +56,10 @@ public class DriveRequest {
 	public int read(byte[] buf, int offset, int length) throws IOException {
 		return this.request.stream.read(buf, offset, length);
 	}
-	public boolean hasHeader(int key) {
+	public boolean hasParam(int key) {
 		return this.property.containsKey(key);
 	}
-	public String getHeader(int key) {
+	public String getParam(int key) {
 		return this.property.get(key);
 	}
 }

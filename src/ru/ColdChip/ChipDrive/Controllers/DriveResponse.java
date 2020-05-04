@@ -16,7 +16,7 @@ public class DriveResponse {
 		this.response = response;
 	}
 
-	public void setHeader(int key, String val) {
+	public void setParam(int key, String val) {
 		switch(key) {
 			case DriveResponse.STATUS: {
 				this.response.setStatus(Integer.parseInt(val));

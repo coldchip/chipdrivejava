@@ -84,8 +84,8 @@ var apps = {
 				}
 				resizeBtn();
 				window.addEventListener("resize", resizeBtn);
-			}, function() {
-				window.location.href = "/login/?client_id=2219921&continue=" + window.location.href;
+			}, function(url) {
+				window.location.href = url;
 			});
 		});
 	}
