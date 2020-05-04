@@ -466,9 +466,21 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	private void sendError(DriveResponse response, JSONObject data) throws IOException {
 		JSONObject stub = new JSONObject();
 		stub.put("error", true);
-		stub.put("errorMsg", data.getString("errorMsg"));
-		stub.put("login", data.getBoolean("login"));
-		stub.put("url", data.getString("url"));
+		if(data.has("errorMsg")) {
+			stub.put("errorMsg", data.getString("errorMsg"));
+		} else {
+			stub.put("errorMsg", "Unknown Error");
+		}
+		if(data.has("login")) {
+			stub.put("login", data.getBoolean("login"));
+		} else {
+			stub.put("login", false);
+		}
+		if(data.has("url")) {
+			stub.put("url", data.getString("url"));
+		} else {
+			stub.put("url", "null");
+		}
 		stub.put("data", new JSONObject());
 		response.setParam(DriveResponse.CONTENT_TYPE, "application/json");
 		response.write(stub.toString(4));
