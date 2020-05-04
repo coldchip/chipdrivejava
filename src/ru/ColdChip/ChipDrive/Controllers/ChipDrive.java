@@ -58,7 +58,6 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		if(request.hasParam(DriveRequest.AUTH_TOKEN)) {
 			token = request.getParam(DriveRequest.AUTH_TOKEN);
 		}
-		System.out.println(token);
 		try {
 			switch(method) {
 				case ChipDrive.VERSION: {
@@ -147,15 +146,17 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 			}
 		} catch(ChipDriveException e) {
 			JSONObject error = new JSONObject();
+			error.put("error", true);
 			error.put("errorMsg", e.toString());
 			error.put("login", false);
-			sendError(response, error);
+			sendMessage(response, error);
 		} catch(ChipDriveLoginException e) {
 			JSONObject error = new JSONObject();
+			error.put("error", true);
 			error.put("errorMsg", e.toString());
 			error.put("login", true);
 			error.put("url", "");
-			sendError(response, error);
+			sendMessage(response, error);
 		}
 	}
 
@@ -463,13 +464,19 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	private void sendError(DriveResponse response, JSONObject data) throws IOException {
+	private void sendMessage(DriveResponse response, JSONObject data) throws IOException {
 		JSONObject stub = new JSONObject();
-		stub.put("error", true);
+		if(data.has("error")) {
+			stub.put("error", data.getBoolean("error"));
+			stub.put("data", new JSONObject());
+		} else {
+			stub.put("error", false);
+			stub.put("data", data);
+		}
 		if(data.has("errorMsg")) {
 			stub.put("errorMsg", data.getString("errorMsg"));
 		} else {
-			stub.put("errorMsg", "Unknown Error");
+			stub.put("errorMsg", "");
 		}
 		if(data.has("login")) {
 			stub.put("login", data.getBoolean("login"));
@@ -481,18 +488,6 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		} else {
 			stub.put("url", "null");
 		}
-		stub.put("data", new JSONObject());
-		response.setParam(DriveResponse.CONTENT_TYPE, "application/json");
-		response.write(stub.toString(4));
-	}
-
-	private void sendMessage(DriveResponse response, JSONObject data) throws IOException {
-		JSONObject stub = new JSONObject();
-		stub.put("error", false);
-		stub.put("errorMsg", "");
-		stub.put("login",false);
-		stub.put("url", "");
-		stub.put("data", data);
 		response.setParam(DriveResponse.CONTENT_TYPE, "application/json");
 		response.write(stub.toString(4));
 	}
