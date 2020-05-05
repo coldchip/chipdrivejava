@@ -27,7 +27,6 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	public static final int STREAM  = 11;
 	public static final int UNKNOWN = 12;
 	public static final int LOGIN   = 13;
-	public static final int STATE   = 14;
 
 	private static volatile int threads = 0;
 
@@ -64,10 +63,6 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 			switch(method) {
 				case ChipDrive.LOGIN: {
 					this.login(request, response);
-				}
-				break;
-				case ChipDrive.STATE: {
-					this.state(request, response);
 				}
 				break;
 				case ChipDrive.VERSION: {
@@ -165,51 +160,37 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 			error.put("error", true);
 			error.put("errorMsg", e.toString());
 			error.put("login", true);
-			error.put("url", "/login/?continue=/drive");
+			error.put("url", "/login/");
 			sendMessage(response, error);
 		}
 	}
 
 	private void login(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		String username = null;
-		String password = null;
-		if(request.hasParam(DriveRequest.USERNAME)) {
-			username = request.getParam(DriveRequest.USERNAME);
-		}
-		if(request.hasParam(DriveRequest.PASSWORD)) {
-			password = request.getParam(DriveRequest.PASSWORD);
-		}
-		if(username.equals("a") && password.equals("a")) {
-			String random = this.randomString(128);
-			this.addToken(random);
-			response.setParam(DriveResponse.TOKEN, random);
+		if(request.hasParam(DriveRequest.USERNAME) && request.hasParam(DriveRequest.PASSWORD)) {
+			String username = request.getParam(DriveRequest.USERNAME);
+			String password = request.getParam(DriveRequest.PASSWORD);
+			if(username.equals("a") && password.equals("a")) {
+				String random = this.randomString(128);
+				this.addToken(random);
+				response.setParam(DriveResponse.TOKEN, random);
 
-			JSONObject result = new JSONObject();
-			result.put("message", "Logged In");
-			response.setParam(DriveResponse.CONTENT_TYPE, "application/json");
-			response.write(result.toString(4));
+				JSONObject result = new JSONObject();
+				result.put("message", "Logged In");
+				result.put("url", "/drive");
+				response.setParam(DriveResponse.CONTENT_TYPE, "application/json");
+				response.write(result.toString(4));
+			} else {
+				JSONObject result = new JSONObject();
+				result.put("message", "Invalid Credentials");
+				response.setParam(DriveResponse.CONTENT_TYPE, "application/json");
+				response.write(result.toString(4));
+			}
 		} else {
 			JSONObject result = new JSONObject();
-			result.put("message", "Invalid Credentials");
+			result.put("message", "Username or Password is empty");
 			response.setParam(DriveResponse.CONTENT_TYPE, "application/json");
 			response.write(result.toString(4));
 		}
-	}
-
-	private void state(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		String token = null;
-		if(request.hasParam(DriveRequest.AUTH_TOKEN)) {
-			token = request.getParam(DriveRequest.AUTH_TOKEN);
-		}
-
-		JSONObject config = new JSONObject();
-		if(this.hasToken(token)) {
-			config.put("state", "LOGGED_IN");
-		} else {
-			config.put("state", "NOT_LOGGED_IN");
-		}
-		response.setParam(DriveResponse.CONTENT_TYPE, "application/json");
-		response.write(config.toString(4));
 	}
 
 	private void version(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {

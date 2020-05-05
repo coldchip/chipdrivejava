@@ -690,12 +690,10 @@ function ChipDrive() {
 							var response = JSON.parse(xhr.responseText);
 							if (response["error"] == true) {
 								if(response["login"] == true) {
-									extra("Login Required, Press OKAY to Login", function() {
-										if(that.isLoggingIn == false) {
-											that.isLoggingIn = true;
-											that.login(response["url"]);
-										}
-									});
+									if(that.isLoggingIn == false) {
+										that.isLoggingIn = true;
+										that.login(response["url"]);
+									}
 								} else {
 									that.isLoggingIn = false;
 									extra(response["errorMsg"], function(){});

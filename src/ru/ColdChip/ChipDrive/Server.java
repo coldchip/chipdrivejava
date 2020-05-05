@@ -28,14 +28,6 @@ public class Server {
 
 		ChipDrive drive = new ChipDrive();
 		
-		
-
-		server.on("/api/v1/login/state", new HTTPRoute() {
-			@Override public void handle(Request request, Response response) throws IOException {
-				drive.enqueue(ChipDrive.STATE, request, response);
-			}
-		});
-
 		server.on("/api/v1/login", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {
 				drive.enqueue(ChipDrive.LOGIN, request, response);
