@@ -1,6 +1,7 @@
 package ru.ColdChip.ChipDrive.Controllers;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import ru.ColdChip.WebServer.*;
 
 public class DriveResponse {
@@ -11,12 +12,13 @@ public class DriveResponse {
 	public static final int ACCEPT_RANGES       = 3 << 8;
 	public static final int CONTENT_RANGE       = 4 << 8;
 	public static final int CONTENT_NAME        = 5 << 8;
+	public static final int TOKEN               = 6 << 8;
 
 	public DriveResponse(Response response) {
 		this.response = response;
 	}
 
-	public void setParam(int key, String val) {
+	public void setParam(int key, String val) throws UnsupportedEncodingException {
 		switch(key) {
 			case DriveResponse.STATUS: {
 				this.response.setStatus(Integer.parseInt(val));
@@ -35,6 +37,9 @@ public class DriveResponse {
 			} break;
 			case DriveResponse.CONTENT_NAME: {
 				this.response.setHeader("Content-Disposition", val);
+			} break;
+			case DriveResponse.TOKEN: {
+				this.response.setCookie("token", val);
 			} break;
 		}
 	}

@@ -17,36 +17,46 @@ public class DriveRequest {
 	public static final int FILE_ID             = 5 << 0;
 	public static final int NAME                = 6 << 0;
 	public static final int ITEM_ID             = 7 << 0;
-	public static final int AUTH_TOKEN          = 8 << 0;
+	public static final int USERNAME            = 8 << 0;
+	public static final int PASSWORD            = 9 << 0;
+	public static final int AUTH_TOKEN          = 10 << 0;
 
 	public DriveRequest(Request request) {
 		this.request = request;
 		if(request.hasHeader("content-length")) {
 			property.put(DriveRequest.CONTENT_LENGTH, request.getHeader("content-length"));
 		}
-		if(this.request.hasRangeStart()) {
-			property.put(DriveRequest.RANGE_START, Long.toString(this.request.getRangeStart()));
+		if(request.hasRangeStart()) {
+			property.put(DriveRequest.RANGE_START, Long.toString(request.getRangeStart()));
 		} 
-		if(this.request.hasRangeEnd()) {
-			property.put(DriveRequest.RANGE_END, Long.toString(this.request.getRangeEnd()));
+		if(request.hasRangeEnd()) {
+			property.put(DriveRequest.RANGE_END, Long.toString(request.getRangeEnd()));
+		}
+		if(request.hasPost("username")) {
+			property.put(DriveRequest.USERNAME, request.getPost("username"));
+		}
+		if(request.hasPost("password")) {
+			property.put(DriveRequest.PASSWORD, request.getPost("password"));
+		}
+		if(request.hasCookie("token")) {
+			property.put(DriveRequest.AUTH_TOKEN, request.getCookie("token"));
 		}
 		
 		try {
-			JSONObject props = new JSONObject(request.getValue("props"));
-			if(props.has("token")) {
-				property.put(DriveRequest.AUTH_TOKEN, props.getString("token"));
-			}
-			if(props.has("folderid")) {
-				property.put(DriveRequest.FOLDER_ID, props.getString("folderid"));
-			}
-			if(props.has("fileid")) {
-				property.put(DriveRequest.FILE_ID, props.getString("fileid"));
-			}
-			if(props.has("name")) {
-				property.put(DriveRequest.NAME, props.getString("name"));
-			}
-			if(props.has("itemid")) {
-				property.put(DriveRequest.ITEM_ID, props.getString("itemid"));
+			if(request.hasValue("props")) {
+				JSONObject props = new JSONObject(request.getValue("props"));
+				if(props.has("folderid")) {
+					property.put(DriveRequest.FOLDER_ID, props.getString("folderid"));
+				}
+				if(props.has("fileid")) {
+					property.put(DriveRequest.FILE_ID, props.getString("fileid"));
+				}
+				if(props.has("name")) {
+					property.put(DriveRequest.NAME, props.getString("name"));
+				}
+				if(props.has("itemid")) {
+					property.put(DriveRequest.ITEM_ID, props.getString("itemid"));
+				}
 			}
 		} catch(JSONException e) {
 			

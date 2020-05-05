@@ -8,15 +8,34 @@ package ru.ColdChip.WebServer;
 
 import java.util.*;
 import java.io.*;
+import java.net.HttpCookie;
 
 public class Request {
+	// TODO: Move header parser into this class
 	public Header header;
 	public InputStream stream;
 	public Response res;
 	private LinkedHashMap<String, String> args;
+	private HashMap<String, String> cookies = new HashMap<String, String>();
 	public Request(InputStream stream, Header header) {
-		this.header = header;
-		this.stream = stream;
+		this.header  = header;
+		this.stream  = stream;
+		if(this.hasHeader("cookie")) {
+			parseCookie(this.getHeader("cookie"));
+		}
+	}
+	private void parseCookie(String input) {
+		String[] cookiePairs = input.split("; ");
+		for (int i = 0; i < cookiePairs.length; i++)  {
+			String[] cookieValue = cookiePairs[i].split("=");
+			this.cookies.put(cookieValue[0], cookieValue[1]);
+		}
+	}
+	public String getCookie(String key) {
+		return this.cookies.get(key);
+	}
+	public boolean hasCookie(String key) {
+		return this.cookies.containsKey(key);
 	}
 	public String getHeader(String key) {
 		return this.header.getHeader(key);
@@ -63,19 +82,17 @@ public class Request {
 	public String getArgs(String val) {
 		return this.args.get(val);
 	}
+	public boolean hasValue(String key) {
+		return this.header.query.containsKey(key);
+	}
 	public String getValue(String key) {
-		String results = "";
-		if(this.header.query.containsKey(key) == true) {
-			results = this.header.query.get(key);
-		}
-		return results;
+		return this.header.query.get(key);
+	}
+	public boolean hasPost(String key) {
+		return this.header.postQuery.containsKey(key);
 	}
 	public String getPost(String key) {
-		String results = "";
-		if(this.header.postQuery.containsKey(key) == true) {
-			results = this.header.postQuery.get(key);
-		}
-		return results;
+		return this.header.postQuery.get(key);
 	}
 	
 }

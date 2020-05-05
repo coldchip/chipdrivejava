@@ -32,13 +32,13 @@ public class Server {
 
 		server.on("/api/v1/login/state", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {
-				response.write("{\"state\":\"NOT_LOGGED_IN\"}");
+				drive.enqueue(ChipDrive.STATE, request, response);
 			}
 		});
 
 		server.on("/api/v1/login", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {
-				response.write("{\"message\":\"Backend Error\"}");
+				drive.enqueue(ChipDrive.LOGIN, request, response);
 			}
 		});
 		

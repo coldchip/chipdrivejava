@@ -40,15 +40,15 @@ public class Header {
 	}
 
 	public boolean hasHeader(String key) {
-		return headers.containsKey(key);
+		return headers.containsKey(key.toLowerCase());
 	}
 
 	public void addHeader(String key, String value) {
-		headers.put(key, value);
+		headers.put(key.toLowerCase(), value);
 	}
 
 	public String getHeader(String key) {
-		return headers.get(key);
+		return headers.get(key.toLowerCase());
 	}
 
 }

@@ -17,6 +17,7 @@ public class Response {
 	public Request req;
 	private boolean isHeaderSent = false;
 	private HashMap<String, String> headers = new HashMap<String, String>();
+	private StringBuilder cookie = new StringBuilder();
 
 	public Response(OutputStream stream) {
 		setStatus(200);
@@ -32,39 +33,45 @@ public class Response {
 	public Request getRequest() {
 		return this.req;
 	}
+	public void setCookie(String key, String val) throws UnsupportedEncodingException {
+		this.cookie.append(URLEncoder.encode(key, "UTF-8") + "=" + URLEncoder.encode(val, "UTF-8"));
+	}
 	public void setHeader(String key, String val) {
 		key = key.toLowerCase();
 		this.headers.put(key, val);
 	}
 	public String buildHeader() {
-		String output = "";
+		StringBuilder output = new StringBuilder();
 		switch(this.status) {
 			case 200:{
-				output += "HTTP/1.1 200 OK\r\n";
+				output.append("HTTP/1.1 200 OK\r\n");
 			}
 			break;
 			case 404:{
-				output += "HTTP/1.1 404 Not Found\r\n";
+				output.append("HTTP/1.1 404 Not Found\r\n");
 			}
 			break;
 			case 206:{
-				output += "HTTP/1.1 206 Partial Content\r\n";
+				output.append("HTTP/1.1 206 Partial Content\r\n");
 			}
 			break;
 			case 416:{
-				output += "HTTP/1.1 416 Range Not Satisfiable\r\n";
+				output.append("HTTP/1.1 416 Range Not Satisfiable\r\n");
 			}
 			break;
 			default: {
-				output += "HTTP/1.1 501 Not Implemented\r\n";
+				output.append("HTTP/1.1 501 Not Implemented\r\n");
 			}
 			break;
 		}
-		for(Map.Entry<String, String> entry : this.headers.entrySet()) {
-			output += (entry.getKey() + ": " + entry.getValue() + "\r\n");
+		if(this.cookie.length() > 0) {
+			setHeader("Set-Cookie", this.cookie.toString());
 		}
-		output += "\r\n";
-		return output;
+		for(Map.Entry<String, String> entry : this.headers.entrySet()) {
+			output.append(entry.getKey() + ": " + entry.getValue() + "\r\n");
+		}
+		output.append("\r\n");
+		return output.toString();
 	}
 	public void write(byte[] data) throws IOException {
 		if(this.isHeaderSent == false) {
