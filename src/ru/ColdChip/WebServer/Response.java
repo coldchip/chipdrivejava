@@ -17,7 +17,7 @@ public class Response {
 	public Request req;
 	private boolean isHeaderSent = false;
 	private HashMap<String, String> headers = new HashMap<String, String>();
-	private StringBuilder cookie = new StringBuilder();
+	private ArrayList<String> cookies = new ArrayList<String>();
 
 	public Response(OutputStream stream) {
 		setStatus(200);
@@ -34,7 +34,7 @@ public class Response {
 		return this.req;
 	}
 	public void setCookie(String key, String val) throws UnsupportedEncodingException {
-		this.cookie.append(URLEncoder.encode(key, "UTF-8") + "=" + URLEncoder.encode(val, "UTF-8"));
+		this.cookies.add(URLEncoder.encode(key, "UTF-8") + "=" + URLEncoder.encode(val, "UTF-8") + "; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT; ");
 	}
 	public void setHeader(String key, String val) {
 		key = key.toLowerCase();
@@ -64,8 +64,8 @@ public class Response {
 			}
 			break;
 		}
-		if(this.cookie.length() > 0) {
-			setHeader("Set-Cookie", this.cookie.toString());
+		for(String cookie : this.cookies) {
+			output.append("Set-Cookie: " + cookie + "\r\n");
 		}
 		for(Map.Entry<String, String> entry : this.headers.entrySet()) {
 			output.append(entry.getKey() + ": " + entry.getValue() + "\r\n");

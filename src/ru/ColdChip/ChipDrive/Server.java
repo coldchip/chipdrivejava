@@ -30,6 +30,7 @@ public class Server {
 		
 		server.on("/api/v1/login", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {
+				response.setCookie("token_2", "ok");
 				drive.enqueue(ChipDrive.LOGIN, request, response);
 			}
 		});

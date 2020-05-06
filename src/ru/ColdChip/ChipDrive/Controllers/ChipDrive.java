@@ -5,6 +5,7 @@ import ru.ColdChip.ChipDrive.api.ChipFS;
 import ru.ColdChip.ChipDrive.Exceptions.*;
 import ru.ColdChip.ChipDrive.Object.*;
 import ru.ColdChip.ChipDrive.Constants.MimeTypes;
+import java.security.*;
 import java.io.*;
 import java.util.*;
 import java.text.*;
@@ -33,7 +34,6 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	private HashMap<String, DriveUser> tokens = new HashMap<String, DriveUser>();
 
 	public ChipDrive() {
-		this.addToken("hello");
 		log("-----DONE-----");
 	}
 
@@ -170,7 +170,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 			String username = request.getParam(DriveRequest.USERNAME);
 			String password = request.getParam(DriveRequest.PASSWORD);
 			if(username.equals("a") && password.equals("a")) {
-				String random = this.randomString(128);
+				String random = this.randomString(64);
 				this.addToken(random);
 				response.setParam(DriveResponse.TOKEN, random);
 
@@ -540,7 +540,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	}
 
 	public static String randomString(int length) {
-		final String list = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
+		final String list = "XvJ1kQWM7p9KCmGPfaT6YRledInBxEorLVj3NFU0usZ8gy_2iStwchbqz45AOHD";
 		StringBuilder results = new StringBuilder();
 		for(int i = 0; i < length; i++) {
 			int character = (int)(Math.random() * list.length());
@@ -549,12 +549,28 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		return results.toString();
 	}
 
+	private static String sha1(String input) {
+		try {
+			MessageDigest mDigest = MessageDigest.getInstance("SHA-256");
+			byte[] result = mDigest.digest(input.getBytes());
+			StringBuffer sb = new StringBuffer();
+			for (int i = 0; i < result.length; i++) {
+				sb.append(Integer.toString((result[i] & 0xff) + 0x100, 16).substring(1));
+			}
+			return sb.toString();
+		} catch(NoSuchAlgorithmException e) {
+			return input;
+		}
+	}
+
 	public boolean hasToken(String token) {
 		return this.tokens.containsKey(token);
 	}
 
 	public void addToken(String token) {
-		this.tokens.put(token, new DriveUser());
+		if(token != null) {
+			this.tokens.put(token, new DriveUser());
+		}
 	}
 
 } 

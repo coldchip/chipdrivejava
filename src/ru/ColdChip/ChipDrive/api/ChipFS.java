@@ -57,16 +57,16 @@ public class ChipFS {
 		RandomAccessFile io = getHandler(id);
 		io.seek(offset);
 		io.read(buffer, 0, size);
-		for(int i = 0; i < buffer.length; i++) {
-			buffer[i] = (byte)(buffer[i] ^ key[i % key.length]);
-		}
+		//for(int i = 0; i < buffer.length; i++) {
+		//	buffer[i] = (byte)(buffer[i] ^ key[i % key.length]);
+		//}
 		return true;
 	}
 
 	public boolean write(String id, byte[] buffer, long offset, int size) throws IOException {
-		for(int i = 0; i < size; i++) {
-			buffer[i] = (byte)(buffer[i] ^ key[i % key.length]);
-		}
+		//for(int i = 0; i < size; i++) {
+		//	buffer[i] = (byte)(buffer[i] ^ key[i % key.length]);
+		//}
 		RandomAccessFile io = getHandler(id);
 		io.seek(offset);
 		io.write(buffer, 0, size);
