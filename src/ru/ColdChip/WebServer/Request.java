@@ -25,10 +25,12 @@ public class Request {
 		}
 	}
 	private void parseCookie(String input) {
-		String[] cookiePairs = input.split("; ");
+		String[] cookiePairs = input.split(";");
 		for (int i = 0; i < cookiePairs.length; i++)  {
-			String[] cookieValue = cookiePairs[i].split("=");
-			this.cookies.put(cookieValue[0], cookieValue[1]);
+			String[] cookieValue = cookiePairs[i].trim().split("=");
+			if(cookieValue.length == 2) {
+				this.cookies.put(cookieValue[0], cookieValue[1]);
+			}
 		}
 	}
 	public String getCookie(String key) {

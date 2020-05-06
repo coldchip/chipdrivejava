@@ -15,6 +15,8 @@ import java.util.concurrent.TimeUnit;
 
 public class ChipDrive extends ChipFS implements IChipDrive {
 
+	private final String SECRET = "G6DDKCsSYT59AxR3J9WrbgmwXy2c64kA6zQU8J7GYbE2JA9HGt58Sw5vtkJ5Zr5BgqZMDVCdtuZranwn2MBF5ULDeqZWNs4LpYqypgmFxFYxhaxVTk7s5zhpcS34fMpx";
+
 	public static final int VERSION = 1;
 	public static final int CONFIG  = 2;
 	public static final int LIST    = 3;
@@ -55,7 +57,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		int method = queue.getMethod();
 		DriveRequest request = queue.getRequest();
 		DriveResponse response = queue.getResponse();
-		String token = null;
+		String token = "";
 		if(request.hasParam(DriveRequest.AUTH_TOKEN)) {
 			token = request.getParam(DriveRequest.AUTH_TOKEN);
 		}
@@ -169,8 +171,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		if(request.hasParam(DriveRequest.USERNAME) && request.hasParam(DriveRequest.PASSWORD)) {
 			String username = request.getParam(DriveRequest.USERNAME);
 			String password = request.getParam(DriveRequest.PASSWORD);
-			if(username.equals("a") && password.equals("a")) {
-				String random = this.randomString(64);
+			if(username.equals("coldchip") && hash(password + SECRET).equals("dda7d1aa4380d0589df76fe5929508dfadbfdc78c613fd79a652089205950773")) {
+				String random = this.randomString(128);
 				this.addToken(random);
 				response.setParam(DriveResponse.TOKEN, random);
 
@@ -549,7 +551,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		return results.toString();
 	}
 
-	private static String sha1(String input) {
+	private static String hash(String input) {
 		try {
 			MessageDigest mDigest = MessageDigest.getInstance("SHA-256");
 			byte[] result = mDigest.digest(input.getBytes());
