@@ -43,7 +43,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		try {
 			threads++;
 			if(threads < 255) {
-				DriveRequest driveRequest = new DriveRequest(request);
+				DriveRequest driveRequest = new DriveRequest(request, tokens);
 				DriveResponse driveResponse = new DriveResponse(response);
 				DriveQueue queue = new DriveQueue(method, driveRequest, driveResponse);
 				this.dispatch(queue);
@@ -57,10 +57,6 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		int method = queue.getMethod();
 		DriveRequest request = queue.getRequest();
 		DriveResponse response = queue.getResponse();
-		String token = "";
-		if(request.hasParam(DriveRequest.AUTH_TOKEN)) {
-			token = request.getParam(DriveRequest.AUTH_TOKEN);
-		}
 		try {
 			switch(method) {
 				case ChipDrive.LOGIN: {
@@ -76,7 +72,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 				}
 				break;
 				case ChipDrive.LIST: {
-					if(this.hasToken(token) == true) {
+					if(request.hasUser() == true) {
 						this.list(request, response);
 					} else {
 						throw new ChipDriveLoginException();
@@ -84,7 +80,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 				}
 				break;
 				case ChipDrive.LINK: {
-					if(this.hasToken(token) == true) {
+					if(request.hasUser() == true) {
 						this.link(request, response);
 					} else {
 						throw new ChipDriveLoginException();
@@ -92,7 +88,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 				}
 				break;
 				case ChipDrive.UPLOAD: {
-					if(this.hasToken(token) == true) {
+					if(request.hasUser() == true) {
 						this.upload(request, response);
 					} else {
 						throw new ChipDriveLoginException();
@@ -100,7 +96,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 				}
 				break;
 				case ChipDrive.DELETE: {
-					if(this.hasToken(token) == true) {
+					if(request.hasUser() == true) {
 						this.delete(request, response);
 					} else {
 						throw new ChipDriveLoginException();
@@ -108,7 +104,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 				}
 				break;
 				case ChipDrive.FOLDER: {
-					if(this.hasToken(token) == true) {
+					if(request.hasUser() == true) {
 						this.folder(request, response);
 					} else {
 						throw new ChipDriveLoginException();
@@ -116,7 +112,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 				}
 				break;
 				case ChipDrive.RENAME: {
-					if(this.hasToken(token) == true) {
+					if(request.hasUser() == true) {
 						this.rename(request, response);
 					} else {
 						throw new ChipDriveLoginException();
@@ -124,7 +120,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 				}
 				break;
 				case ChipDrive.INFO: {
-					if(this.hasToken(token) == true) {
+					if(request.hasUser() == true) {
 						this.info(request, response);
 					} else {
 						throw new ChipDriveLoginException();
@@ -132,7 +128,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 				}
 				break;
 				case ChipDrive.QUOTA: {
-					if(this.hasToken(token) == true) {
+					if(request.hasUser() == true) {
 						this.quota(request, response);
 					} else {
 						throw new ChipDriveLoginException();
@@ -140,7 +136,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 				}
 				break;
 				case ChipDrive.STREAM: {
-					if(this.hasToken(token) == true) {
+					if(request.hasUser() == true) {
 						this.stream(request, response);
 					} else {
 						throw new ChipDriveLoginException();
@@ -172,9 +168,9 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 			String username = request.getParam(DriveRequest.USERNAME);
 			String password = request.getParam(DriveRequest.PASSWORD);
 			if(username.equals("coldchip") && hash(password + SECRET).equals("dda7d1aa4380d0589df76fe5929508dfadbfdc78c613fd79a652089205950773")) {
-				String random = this.randomString(128);
-				this.addToken(random);
-				response.setParam(DriveResponse.TOKEN, random);
+				DriveUser user = new DriveUser(username);
+				String token = this.addUser(user);
+				response.setParam(DriveResponse.TOKEN, token);
 
 				JSONObject result = new JSONObject();
 				result.put("message", "Logged In");
@@ -565,14 +561,11 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	public boolean hasToken(String token) {
-		return this.tokens.containsKey(token);
-	}
-
-	public void addToken(String token) {
-		if(token != null) {
-			this.tokens.put(token, new DriveUser());
-		}
+	public String addUser(DriveUser user) {
+		String random = randomString(128);
+		this.tokens.put(random, user);
+		return random;
+		
 	}
 
 } 
