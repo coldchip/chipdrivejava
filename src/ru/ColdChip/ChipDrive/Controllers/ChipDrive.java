@@ -33,7 +33,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 
 	private static volatile int threads = 0;
 
-	private HashMap<String, DriveUser> tokens = new HashMap<String, DriveUser>();
+	private DriveSession sessions = new DriveSession();
 
 	public ChipDrive() {
 		log("-----DONE-----");
@@ -43,7 +43,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		try {
 			threads++;
 			if(threads < 255) {
-				DriveRequest driveRequest = new DriveRequest(request, tokens);
+				DriveRequest driveRequest = new DriveRequest(request, sessions);
 				DriveResponse driveResponse = new DriveResponse(response);
 				DriveQueue queue = new DriveQueue(method, driveRequest, driveResponse);
 				this.dispatch(queue);
@@ -57,6 +57,11 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		int method = queue.getMethod();
 		DriveRequest request = queue.getRequest();
 		DriveResponse response = queue.getResponse();
+		DriveUser user = null;
+		String token = "";
+		if(request.hasParam(DriveRequest.AUTH_TOKEN)) {
+			token = request.getParam(DriveRequest.AUTH_TOKEN);
+		}
 		try {
 			switch(method) {
 				case ChipDrive.LOGIN: {
@@ -72,72 +77,72 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 				}
 				break;
 				case ChipDrive.LIST: {
-					if(request.hasUser() == true) {
-						this.list(request, response);
+					if(sessions.hasUser(token) == true) {
+						this.list(sessions.getUser(token), request, response);
 					} else {
 						throw new ChipDriveLoginException();
 					}
 				}
 				break;
 				case ChipDrive.LINK: {
-					if(request.hasUser() == true) {
-						this.link(request, response);
+					if(sessions.hasUser(token) == true) {
+						this.link(sessions.getUser(token), request, response);
 					} else {
 						throw new ChipDriveLoginException();
 					}
 				}
 				break;
 				case ChipDrive.UPLOAD: {
-					if(request.hasUser() == true) {
-						this.upload(request, response);
+					if(sessions.hasUser(token) == true) {
+						this.upload(sessions.getUser(token), request, response);
 					} else {
 						throw new ChipDriveLoginException();
 					}
 				}
 				break;
 				case ChipDrive.DELETE: {
-					if(request.hasUser() == true) {
-						this.delete(request, response);
+					if(sessions.hasUser(token) == true) {
+						this.delete(sessions.getUser(token), request, response);
 					} else {
 						throw new ChipDriveLoginException();
 					}
 				}
 				break;
 				case ChipDrive.FOLDER: {
-					if(request.hasUser() == true) {
-						this.folder(request, response);
+					if(sessions.hasUser(token) == true) {
+						this.folder(sessions.getUser(token), request, response);
 					} else {
 						throw new ChipDriveLoginException();
 					}
 				}
 				break;
 				case ChipDrive.RENAME: {
-					if(request.hasUser() == true) {
-						this.rename(request, response);
+					if(sessions.hasUser(token) == true) {
+						this.rename(sessions.getUser(token), request, response);
 					} else {
 						throw new ChipDriveLoginException();
 					}
 				}
 				break;
 				case ChipDrive.INFO: {
-					if(request.hasUser() == true) {
-						this.info(request, response);
+					if(sessions.hasUser(token) == true) {
+						this.info(sessions.getUser(token), request, response);
 					} else {
 						throw new ChipDriveLoginException();
 					}
 				}
 				break;
 				case ChipDrive.QUOTA: {
-					if(request.hasUser() == true) {
-						this.quota(request, response);
+					if(sessions.hasUser(token) == true) {
+						this.quota(sessions.getUser(token), request, response);
 					} else {
 						throw new ChipDriveLoginException();
 					}
 				}
 				break;
 				case ChipDrive.STREAM: {
-					if(request.hasUser() == true) {
-						this.stream(request, response);
+					if(sessions.hasUser(token) == true) {
+						this.stream(sessions.getUser(token), request, response);
 					} else {
 						throw new ChipDriveLoginException();
 					}
@@ -169,7 +174,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 			String password = request.getParam(DriveRequest.PASSWORD);
 			if(username.equals("coldchip") && hash(password + SECRET).equals("dda7d1aa4380d0589df76fe5929508dfadbfdc78c613fd79a652089205950773")) {
 				DriveUser user = new DriveUser(username);
-				String token = this.addUser(user);
+				String token = randomString(128);
+				this.sessions.addUser(token, user);
 				response.setParam(DriveResponse.TOKEN, token);
 
 				JSONObject result = new JSONObject();
@@ -219,8 +225,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		response.write(config.toString(4));
 	}
 
-	private void list(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasParam(DriveRequest.FOLDER_ID)) {
+	private void list(DriveUser user, DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
+		if(request.hasParam(DriveRequest.FOLDER_ID) && user != null) {
 			String folderid = request.getParam(DriveRequest.FOLDER_ID);
 
 			NodeRoot root = new NodeRoot();
@@ -264,8 +270,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	private void link(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasParam(DriveRequest.FILE_ID)) {
+	private void link(DriveUser user, DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
+		if(request.hasParam(DriveRequest.FILE_ID) && user != null) {
 			String fileid = request.getParam(DriveRequest.FILE_ID);
 
 			NodeRoot root = new NodeRoot();
@@ -292,8 +298,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	private void upload(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasParam(DriveRequest.FOLDER_ID) && request.hasParam(DriveRequest.NAME)) {
+	private void upload(DriveUser user, DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
+		if(request.hasParam(DriveRequest.FOLDER_ID) && request.hasParam(DriveRequest.NAME) && user != null) {
 			String folderid = request.getParam(DriveRequest.FOLDER_ID);
 			String name = request.getParam(DriveRequest.NAME);
 			try {
@@ -356,8 +362,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	private void delete(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasParam(DriveRequest.ITEM_ID)) {
+	private void delete(DriveUser user, DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
+		if(request.hasParam(DriveRequest.ITEM_ID) && user != null) {
 			String itemid = request.getParam(DriveRequest.ITEM_ID);
 
 			NodeRoot root = new NodeRoot();
@@ -370,8 +376,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	private void folder(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasParam(DriveRequest.FOLDER_ID) && request.hasParam(DriveRequest.NAME)) {
+	private void folder(DriveUser user, DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
+		if(request.hasParam(DriveRequest.FOLDER_ID) && request.hasParam(DriveRequest.NAME) && user != null) {
 			String folderid = request.getParam(DriveRequest.FOLDER_ID);
 			String name = request.getParam(DriveRequest.NAME);
 
@@ -395,8 +401,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	private void rename(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasParam(DriveRequest.ITEM_ID) && request.hasParam(DriveRequest.NAME)) {
+	private void rename(DriveUser user, DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
+		if(request.hasParam(DriveRequest.ITEM_ID) && request.hasParam(DriveRequest.NAME) && user != null) {
 			String itemid = request.getParam(DriveRequest.ITEM_ID);
 			String name = request.getParam(DriveRequest.NAME);
 
@@ -411,8 +417,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	private void info(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasParam(DriveRequest.FILE_ID)) {
+	private void info(DriveUser user, DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
+		if(request.hasParam(DriveRequest.FILE_ID) && user != null) {
 			String fileid = request.getParam(DriveRequest.FILE_ID);
 
 			NodeRoot root = new NodeRoot();
@@ -428,21 +434,25 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	private void quota(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		NodeRoot root = new NodeRoot();
+	private void quota(DriveUser user, DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
+		if(user != null) {
+			NodeRoot root = new NodeRoot();
 
-		Node node = root.get("");
-		long size = 0;
+			Node node = root.get("");
+			long size = 0;
 
-		JSONObject data = new JSONObject();
-		data.put("used", size);
-		data.put("available", "1073741824");
+			JSONObject data = new JSONObject();
+			data.put("used", size);
+			data.put("available", "1073741824");
 
-		sendMessage(response, data);
+			sendMessage(response, data);
+		} else {
+			throw new ChipDriveException("Params not Satisfiable");
+		}
 	}
 
-	private void stream(DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
-		if(request.hasParam(DriveRequest.FILE_ID)) {
+	private void stream(DriveUser user, DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
+		if(request.hasParam(DriveRequest.FILE_ID) && user != null) {
 			String fileid = request.getParam(DriveRequest.FILE_ID);
 			
 			NodeRoot root = new NodeRoot();
@@ -560,12 +570,4 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 			return input;
 		}
 	}
-
-	public String addUser(DriveUser user) {
-		String random = randomString(128);
-		this.tokens.put(random, user);
-		return random;
-		
-	}
-
 } 

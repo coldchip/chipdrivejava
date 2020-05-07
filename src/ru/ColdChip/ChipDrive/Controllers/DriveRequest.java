@@ -9,7 +9,6 @@ public class DriveRequest {
 	private Request request;
 	private DriveUser user = null;
 	private HashMap<Integer, String> property = new HashMap<Integer, String>();
-	private HashMap<String, DriveUser> tokens = null;
 
 	public static final int STATUS              = 0 << 0;
 	public static final int CONTENT_LENGTH      = 1 << 0;
@@ -23,8 +22,7 @@ public class DriveRequest {
 	public static final int PASSWORD            = 9 << 0;
 	public static final int AUTH_TOKEN          = 10 << 0;
 
-	public DriveRequest(Request request, HashMap<String, DriveUser> tokens) {
-		this.tokens  = tokens;
+	public DriveRequest(Request request, DriveSession sessions) {
 		this.request = request;
 		if(request.hasHeader("content-length")) {
 			property.put(DriveRequest.CONTENT_LENGTH, request.getHeader("content-length"));
@@ -42,10 +40,7 @@ public class DriveRequest {
 			property.put(DriveRequest.PASSWORD, request.getPost("password"));
 		}
 		if(request.hasCookie("token")) {
-			String token = request.getCookie("token");
-			if(this.tokens.containsKey(token) == true) {
-				this.setUser(this.tokens.get(token));
-			}
+			property.put(DriveRequest.AUTH_TOKEN, request.getCookie("token"));
 		}
 		
 		try {
@@ -77,14 +72,5 @@ public class DriveRequest {
 	}
 	public String getParam(int key) {
 		return this.property.get(key);
-	}
-	public void setUser(DriveUser user) {
-		this.user = user;
-	}
-	public boolean hasUser() {
-		return this.user != null;
-	}
-	public DriveUser getUser() {
-		return this.user;
 	}
 }
