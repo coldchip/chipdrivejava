@@ -172,7 +172,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		if(request.hasParam(DriveRequest.USERNAME) && request.hasParam(DriveRequest.PASSWORD)) {
 			String username = request.getParam(DriveRequest.USERNAME);
 			String password = request.getParam(DriveRequest.PASSWORD);
-			if(username.equals("coldchip") && hash(password + SECRET).equals("dda7d1aa4380d0589df76fe5929508dfadbfdc78c613fd79a652089205950773")) {
+			if((username.equals("coldchip") || username.equals("admin")) && hash(password + SECRET).equals("dda7d1aa4380d0589df76fe5929508dfadbfdc78c613fd79a652089205950773")) {
 				DriveUser user = new DriveUser(username);
 				String token = randomString(128);
 				this.sessions.addUser(token, user);
@@ -229,7 +229,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		if(request.hasParam(DriveRequest.FOLDER_ID) && user != null) {
 			String folderid = request.getParam(DriveRequest.FOLDER_ID);
 
-			NodeRoot root = new NodeRoot();
+			NodeRoot root = new NodeRoot(user.getUsername());
 			if(folderid.equals("") && !root.has(folderid)) {
 				FolderObject folder = new FolderObject();
 				folder.setName("home");
@@ -274,7 +274,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		if(request.hasParam(DriveRequest.FILE_ID) && user != null) {
 			String fileid = request.getParam(DriveRequest.FILE_ID);
 
-			NodeRoot root = new NodeRoot();
+			NodeRoot root = new NodeRoot(user.getUsername());
 			Node node = root.get(fileid);
 			if(node instanceof FileObject) {
 				FileObject folder = (FileObject)node;
@@ -306,13 +306,13 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 				if(request.hasParam(DriveRequest.CONTENT_LENGTH)) {
 					String randomID = randomString(32);
 
-					NodeRoot root = new NodeRoot();
+					NodeRoot root = new NodeRoot(user.getUsername());
 
 					FileObject file = new FileObject();
 					file.setName(name);
 					file.setID(randomID);
 					file.setParentID(folderid);
-					file.put(file);
+					root.put(file);
 
 					FolderObject rootDir = (FolderObject)root.get(folderid);
 					rootDir.addChild(file);
@@ -342,8 +342,8 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		}
 	}
 
-	private void deleteRecursive(Node node) throws ChipDriveException, ChipDriveException {
-		NodeRoot root = new NodeRoot();
+	private void deleteRecursive(DriveUser user, Node node) throws ChipDriveException, ChipDriveException {
+		NodeRoot root = new NodeRoot(user.getUsername());
 		
 		FolderObject parent = (FolderObject)root.get(node.getParentID());
 		parent.removeChild(node.getID());
@@ -356,7 +356,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 			ArrayList<String> items = folder.list();
 			for(String item : items) {
 				Node currentNode = root.get(item);
-				deleteRecursive(currentNode);
+				deleteRecursive(user, currentNode);
 			}
 			root.remove(node.getID());
 		}
@@ -366,9 +366,9 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		if(request.hasParam(DriveRequest.ITEM_ID) && user != null) {
 			String itemid = request.getParam(DriveRequest.ITEM_ID);
 
-			NodeRoot root = new NodeRoot();
+			NodeRoot root = new NodeRoot(user.getUsername());
 			Node node = root.get(itemid);
-			deleteRecursive(node);
+			deleteRecursive(user, node);
 
 			sendMessage(response, new JSONObject());
 		} else {
@@ -383,7 +383,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 
 			String randomID = randomString(32);
 
-			NodeRoot root = new NodeRoot();
+			NodeRoot root = new NodeRoot(user.getUsername());
 
 			FolderObject folder = new FolderObject();
 			folder.setName(name);
@@ -406,7 +406,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 			String itemid = request.getParam(DriveRequest.ITEM_ID);
 			String name = request.getParam(DriveRequest.NAME);
 
-			NodeRoot root = new NodeRoot();
+			NodeRoot root = new NodeRoot(user.getUsername());
 			Node node = root.get(itemid);
 			node.setName(name);
 			root.put(node);
@@ -421,7 +421,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		if(request.hasParam(DriveRequest.FILE_ID) && user != null) {
 			String fileid = request.getParam(DriveRequest.FILE_ID);
 
-			NodeRoot root = new NodeRoot();
+			NodeRoot root = new NodeRoot(user.getUsername());
 
 			Node node = root.get(fileid);
 
@@ -436,7 +436,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 
 	private void quota(DriveUser user, DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
 		if(user != null) {
-			NodeRoot root = new NodeRoot();
+			NodeRoot root = new NodeRoot(user.getUsername());
 
 			Node node = root.get("");
 			long size = 0;
@@ -455,7 +455,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		if(request.hasParam(DriveRequest.FILE_ID) && user != null) {
 			String fileid = request.getParam(DriveRequest.FILE_ID);
 			
-			NodeRoot root = new NodeRoot();
+			NodeRoot root = new NodeRoot(user.getUsername());
 			
 			if(root.has(fileid)) {
 				Node node = root.get(fileid);
