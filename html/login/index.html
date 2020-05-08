@@ -113,9 +113,21 @@
 		</script>
 		<style>
 			body, html {
+				transition: all 0.5s cubic-bezier(.25,.8,.25,1);
 				margin: 0;
 				padding: 0px 0px 0px 0px;
 				background: #f1f1f1;
+			}
+			@media screen and (min-width: 550px) {
+				body, html {
+					background: #d9d9d9;
+				}
+				.form {
+					margin: 75px auto !important;
+					box-shadow: 0 1px 2px 0 rgba(60,64,67,0.302), 0 1px 3px 1px rgba(60,64,67,0.149) !important;
+					border-radius: 5px;
+					background: white !important;
+				}
 			}
 			a {
 				color: #4d4d4d;
@@ -150,9 +162,12 @@
 				color: #4d4d4d;
 			}
 			.form {
+				transition: all 0.5s cubic-bezier(.25,.8,.25,1);
 				display: none;
 				width: 350px;
-				margin: auto auto;
+				margin: 0px auto;
+				padding: 10px;
+				box-shadow: 0px;
 			}
 			.label {
 				font-weight: 500;

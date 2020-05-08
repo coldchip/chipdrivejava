@@ -27,7 +27,7 @@ public class Response {
 		setHeader("Expires", "0");
 		setHeader("Connection", "Keep-Alive");
 		setHeader("Keep-Alive", "timeout=5, max=97");
-		setHeader("Server", "ColdChip Web Servlet/CWS 2.0");
+		setHeader("Server", "CWS 2.0");
 		this.stream = stream;
 	}
 	public Request getRequest() {
