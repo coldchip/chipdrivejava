@@ -33,6 +33,12 @@ public class Server {
 				drive.enqueue(ChipDrive.LOGIN, request, response);
 			}
 		});
+
+		server.on("/api/v1/logout", new HTTPRoute() {
+			@Override public void handle(Request request, Response response) throws IOException {
+				drive.enqueue(ChipDrive.LOGOUT, request, response);
+			}
+		});
 		
 		server.on("/api/v1/version", new HTTPRoute() {
 			@Override public void handle(Request request, Response response) throws IOException {

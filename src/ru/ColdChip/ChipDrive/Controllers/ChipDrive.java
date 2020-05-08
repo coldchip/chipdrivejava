@@ -30,6 +30,7 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 	public static final int STREAM  = 11;
 	public static final int UNKNOWN = 12;
 	public static final int LOGIN   = 13;
+	public static final int LOGOUT  = 14;
 
 	private static volatile int threads = 0;
 
@@ -57,7 +58,6 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 		int method = queue.getMethod();
 		DriveRequest request = queue.getRequest();
 		DriveResponse response = queue.getResponse();
-		DriveUser user = null;
 		String token = "";
 		if(request.hasParam(DriveRequest.AUTH_TOKEN)) {
 			token = request.getParam(DriveRequest.AUTH_TOKEN);
@@ -66,6 +66,14 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 			switch(method) {
 				case ChipDrive.LOGIN: {
 					this.login(request, response);
+				}
+				break;
+				case ChipDrive.LOGOUT: {
+					if(sessions.hasUser(token) == true) {
+						this.logout(sessions.getUser(token), request, response);
+					} else {
+						throw new ChipDriveLoginException();
+					}
 				}
 				break;
 				case ChipDrive.VERSION: {
@@ -194,6 +202,19 @@ public class ChipDrive extends ChipFS implements IChipDrive {
 			result.put("message", "Username or Password is empty");
 			response.setParam(DriveResponse.CONTENT_TYPE, "application/json");
 			response.write(result.toString(4));
+		}
+	}
+
+	private void logout(DriveUser user, DriveRequest request, DriveResponse response) throws IOException, ChipDriveException {
+		if(user != null) {
+			this.sessions.removeUser(user);
+
+			JSONObject result = new JSONObject();
+			result.put("message", "Success");
+			response.setParam(DriveResponse.CONTENT_TYPE, "application/json");
+			response.write(result.toString(4));
+		} else {
+			throw new ChipDriveException("Params not Satisfiable");
 		}
 	}
 
