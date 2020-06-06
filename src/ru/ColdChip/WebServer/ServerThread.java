@@ -95,6 +95,10 @@ public class ServerThread implements Runnable {
 						route = this.map.get(key);
 						request.setArgs(parameters);
 						route.handle(request, response);
+						if(response.isHeaderSent == false) {
+							// Flush header even the server did not send anything
+							response.write("");
+						}
 						break;
 					}
 				}

@@ -15,7 +15,7 @@ public class Response {
 	private OutputStream stream;
 	private int status = 200;
 	public Request req;
-	private boolean isHeaderSent = false;
+	public boolean isHeaderSent = false;
 	private HashMap<String, String> headers = new HashMap<String, String>();
 	private ArrayList<String> cookies = new ArrayList<String>();
 
@@ -29,6 +29,12 @@ public class Response {
 		setHeader("Keep-Alive", "timeout=5, max=97");
 		setHeader("Server", "CWS 2.0");
 		this.stream = stream;
+	}
+	private boolean isHeaderSent() {
+		return this.isHeaderSent;
+	}
+	private void isHeaderSent(boolean status) {
+		this.isHeaderSent = status;
 	}
 	public Request getRequest() {
 		return this.req;
@@ -127,9 +133,9 @@ public class Response {
 			String path = pathNormalize(getRequest().getPath());
 			File target = new File(pathNormalize(root + "/" + path));
 			if(target.exists() == true && target.isDirectory() == false) {
-				writeFile(pathNormalize(root + "/" + path));
+				this.writeFile(pathNormalize(root + "/" + path));
 			} else {
-				writeFile(pathNormalize(root + "/" + path + "/index.html"));
+				this.writeFile(pathNormalize(root + "/" + path + "/index.html"));
 			}
 		} catch(FileNotFoundException e) {
 			setStatus(404);
